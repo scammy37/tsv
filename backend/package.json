@@ -12,7 +12,9 @@
     "check:email": "node scripts/check-email.js",
     "test": "cross-env NODE_ENV=test jest --runInBand",
     "test:watch": "cross-env NODE_ENV=test jest --runInBand --watch",
-    "backup": "node scripts/backup.js"
+    "backup": "node scripts/backup.js",
+    "export": "node scripts/export.js",
+    "restore": "node scripts/restore.js"
   },
   "keywords": [],
   "author": "",

@@ -34,7 +34,9 @@ message as well, which is the only thing that actually proves delivery.
 | `npm run seed` | load demo accounts and tickets |
 | `npm run create-admin -- <email> ["Full Name"]` | create, or promote to, a management account |
 | `npm run check:email [-- <address>]` | prove the SMTP connection; with an address, send a real message |
-| `npm run backup [-- <file>]` | dump the database to `backups/` |
+| `npm run backup [-- <file>]` | dump the database to `backups/` with `pg_dump` |
+| `npm run export [-- <file>]` | write every row to one JSON file, no client tools needed |
+| `npm run restore -- <file>` | load an export back in; `--force` overwrites a populated database |
 | `npm test` | Jest + supertest against `tsv_test` |
 
 ## Creating the first management account
@@ -103,8 +105,41 @@ with PostgreSQL 16 client tools cannot dump an 18 server. The script checks
 both versions up front and says which to install, rather than letting
 `pg_dump` fail with a message that does not tell you what to do.
 
-The free tier on most hosts takes no backups at all, and Render deletes free
-databases outright at 90 days. Run this before any plan change or migration.
+### The version-independent way
+
+`pg_dump` refusing to read a newer server is a real obstacle at exactly the
+moment somebody is trying to rescue their data, so there is a second path that
+needs no PostgreSQL client tools at all:
+
+```bash
+npm run export                          # -> backups/tsv-<timestamp>.json
+npm run migrate                         # schema, into the new database
+npm run restore -- backups/tsv-....json
+```
+
+It reads and writes rows through the same driver the app uses, so it works
+from any machine that can run the app, against any server version. Ids and
+sequence positions are preserved — including `ticket_number_seq`, which
+otherwise restarts and hands out ticket numbers that already exist.
+
+The restore runs in one transaction, so a failure part-way leaves the database
+untouched rather than half-populated. It refuses a database that already has
+rows unless given `--force`.
+
+What it gives up against `pg_dump`: the schema. That lives in `db/schema.sql`,
+so a restore is `npm run migrate` and then `npm run restore`. `export.js` also
+fails rather than run if the database has a table the script does not list — a
+backup that silently omits something is worse than no backup, because it gets
+trusted.
+
+### Do it before the deadline
+
+Most free tiers take no backups at all. Render's free PostgreSQL **expires 30
+days after it is created**; there is then a 14-day grace period in which only
+upgrading to a paid plan restores access, and after that Render deletes the
+database and its data. An expired free database cannot be dumped — so the
+export has to happen while it is still running, not once something has gone
+wrong. Run one before any plan change or migration too.
 
 ## Email transports
 

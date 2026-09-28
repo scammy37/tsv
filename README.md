@@ -157,8 +157,11 @@ placeholder `STAFF_INVITE_CODE`. A boot failure there is the guard working.
   [`backend/README.md`](backend/README.md)
 - `cd backend && npm test` runs the integration suite against a `tsv_test`
   database, created and migrated automatically.
-- `cd backend && npm run backup` dumps the database to `backups/`. Run it
-  before any plan change or migration — see
+- `cd backend && npm run backup` dumps the database to `backups/` with
+  `pg_dump`, and `npm run export` writes the same data as JSON for machines
+  without matching PostgreSQL client tools. `npm run restore` loads an export
+  back. Run one before any plan change or migration, and before a free
+  database expires — an expired one cannot be dumped. See
   [`backend/README.md`](backend/README.md#backups).
 - `cd frontend && npm run build` produces the static bundle the API serves.
   CI builds with `CI=true`, which turns lint warnings into errors.
