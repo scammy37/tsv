@@ -96,6 +96,12 @@ const config = {
     adminNotify: process.env.ADMIN_NOTIFY_EMAIL || '',
   },
 
+  // Whether management may download the whole database from the browser.
+  // On by default: the alternative needs the database password on somebody's
+  // laptop, and a backup nobody can take is the failure this is here to
+  // prevent. Set DB_EXPORT=off once a backup is safely in hand.
+  allowDbExport: process.env.DB_EXPORT !== 'off',
+
   bcryptRounds: int(process.env.BCRYPT_ROUNDS, env === 'test' ? 4 : 10),
 
   // When true the API also serves frontend/build, so the whole app runs on one

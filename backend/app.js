@@ -56,6 +56,7 @@ app.use('/api/meta', authenticate, require('./routes/meta'));
 app.use('/api/tickets', require('./routes/tickets'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/reports', require('./routes/reports'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Optionally serve the built frontend from the API. Everything then lives on
 // one origin, which is what the devcontainer uses.

@@ -105,6 +105,24 @@ with PostgreSQL 16 client tools cannot dump an 18 server. The script checks
 both versions up front and says which to install, rather than letting
 `pg_dump` fail with a message that does not tell you what to do.
 
+### Without a terminal
+
+**People → Download a backup** produces exactly the file `npm run export`
+writes, and saves it through the browser. Management only.
+
+It exists because the alternative needs the database password on somebody's
+laptop, and the server already holds that credential — so the export runs
+where the credential already is, and nobody has to move it anywhere.
+
+It is the only route that returns password hashes, so it is worth being clear
+about what it does and does not widen. A management account can already read
+every resident's name, address and phone number, every ticket and every
+comment, and can take over any account by issuing it a temporary password.
+Compromising one is already total. What this adds is the bcrypt hashes, worth
+having offline only to attack passwords reused on other sites. Every download
+is logged as an `AUDIT` line naming who took it and what it contained, and
+`DB_EXPORT=off` refuses the route outright once a backup is in hand.
+
 ### The version-independent way
 
 `pg_dump` refusing to read a newer server is a real obstacle at exactly the
@@ -252,6 +270,7 @@ requires `Authorization: Bearer <token>`.
 | GET | `/users`, `GET /users/:id`, `PATCH /users/:id` | Management only. List filters: `role`, `q`, `includeInactive`, `page`, `limit` |
 | POST | `/users/:id/reset-password` | Management only. Returns `{ user, temporaryPassword }`; the plaintext appears in this response and nowhere else |
 | GET | `/reports/summary` | Volume, timing and workload figures; staff only |
+| GET | `/admin/export` | The whole database as one JSON file; management only. Set `DB_EXPORT=off` to refuse it |
 | GET | `/health` | Public |
 
 ## Ticket lifecycle

@@ -31,6 +31,7 @@ export default function Users() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busyId, setBusyId] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   // Which account is awaiting confirmation of a reset, and the credential
   // handed back by the last one. `issued` holds the only copy of that password
@@ -131,12 +132,63 @@ export default function Users() {
     }
   };
 
+  /**
+   * Downloads the whole database as one JSON file.
+   *
+   * The server holds the database credential, so the export runs there and
+   * arrives here as an ordinary authenticated response -- nobody has to put a
+   * connection string on a laptop to take a backup.
+   */
+  const downloadBackup = async () => {
+    setExporting(true);
+    setError('');
+    setNotice('');
+    try {
+      const res = await api.get('/admin/export');
+
+      // The server names the file. In local development the API is on another
+      // origin and the browser hides the header unless it is exposed, so fall
+      // back rather than downloading something called "download".
+      const disposition = res.headers['content-disposition'] || '';
+      const named = /filename="([^"]+)"/.exec(disposition);
+      const filename = named ? named[1] : `tsv-${new Date().toISOString().slice(0, 10)}.json`;
+
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' }),
+      );
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      // Revoking straight away cancels the download in some browsers.
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+      const rows = Object.values(res.data.tables || {}).reduce((n, t) => n + t.length, 0);
+      setNotice(`Saved ${filename} — ${rows} rows. It contains resident details and password `
+        + 'hashes, so keep it where you would keep those.');
+    } catch (err) {
+      setError(errorMessage(err, 'Could not produce a backup'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <>
       <div className="page-head">
         <div>
           <h1>People</h1>
           <p>Homeowners and managers with access to the portal.</p>
+        </div>
+        <div>
+          <button type="button" className="secondary" onClick={downloadBackup} disabled={exporting}>
+            {exporting ? 'Preparing…' : 'Download a backup'}
+          </button>
+          <p className="field-hint" style={{ marginTop: 6, maxWidth: 260, textAlign: 'right' }}>
+            Every account, request and comment, as one file.
+          </p>
         </div>
       </div>
 
