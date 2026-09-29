@@ -96,6 +96,16 @@ const config = {
     adminNotify: process.env.ADMIN_NOTIFY_EMAIL || '',
   },
 
+  // Most providers cap a message around 40 MB; well under that leaves room
+  // for the encoding overhead and for the provider being stricter than its
+  // documentation. Past it the email goes without the file, and says so.
+  backupMaxAttachmentBytes: int(process.env.BACKUP_MAX_ATTACHMENT_BYTES, 8 * 1024 * 1024),
+
+  // How stale an emailed backup may get before another is sent. The schedule
+  // is "is one overdue?" rather than a clock, because a sleeping free service
+  // has no process for a timer to fire in. 0 turns the emails off.
+  backupEmailDays: Number(process.env.BACKUP_EMAIL_DAYS ?? 1),
+
   // Whether management may download the whole database from the browser.
   // On by default: the alternative needs the database password on somebody's
   // laptop, and a backup nobody can take is the failure this is here to

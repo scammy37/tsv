@@ -105,6 +105,29 @@ with PostgreSQL 16 client tools cannot dump an 18 server. The script checks
 both versions up front and says which to install, rather than letting
 `pg_dump` fail with a message that does not tell you what to do.
 
+### Automatically, by email
+
+With `ADMIN_NOTIFY_EMAIL` set and a mail transport configured, the server
+emails a backup to that address as an attachment whenever the last one is more
+than `BACKUP_EMAIL_DAYS` old (default 1). Nobody has to remember anything.
+
+The schedule is **"is one overdue?"**, checked at every boot and hourly while
+the process lives — not a clock. A free Render service sleeps after fifteen
+idle minutes, so a timer set for 3am fires into a process that does not exist.
+Driving it off staleness instead means the backup goes out the next time
+anything touches the site: late sometimes, but it goes out, where a cron that
+silently never ran would not.
+
+`email_logs` is the record of what was sent, so the schedule survives
+restarts without a table of its own. Only a row with status `sent` counts —
+a failed attempt must not buy another day's silence.
+
+Past `BACKUP_MAX_ATTACHMENT_BYTES` (default 8 MB) the email goes without the
+file and says so, rather than failing to send. A backup that quietly stopped
+arriving is the failure the whole thing exists to prevent.
+
+Set `BACKUP_EMAIL_DAYS=0` to turn the emails off and keep the button.
+
 ### Without a terminal
 
 **People → Download a backup** produces exactly the file `npm run export`

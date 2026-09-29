@@ -61,6 +61,9 @@ run by Taylor Management. One obvious call to action — submit a request.
 - People directory: promote, demote, deactivate, and issue a temporary password
 - **Download a backup** — the whole database as one JSON file, from the
   browser, with no database password on anybody's laptop
+- A backup emailed automatically whenever the last one is more than a day old,
+  driven by staleness rather than a clock so it still works on a host that
+  sleeps the service when idle
 - Email notice when somebody creates an account, to every manager and to
   `ADMIN_NOTIFY_EMAIL` — which can be a personal address, and need not be a
   user of the site

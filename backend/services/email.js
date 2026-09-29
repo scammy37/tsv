@@ -214,6 +214,24 @@ const templates = {
         People page. A deactivated account is signed out immediately.</p>`),
   }),
 
+  database_backup: ({ filename, counts, file, note }) => ({
+    subject: `Backup of ${config.appName} — ${filename}`,
+    html: layout('Here is today\'s backup', `
+      <p>${file
+    ? 'The file attached to this email is a complete copy of the database.'
+    : 'No file is attached — see the note below.'}</p>
+      <table style="border-collapse:collapse;font-size:14px">
+        ${Object.entries(counts).map(([table, n]) => infoRow(table, String(n))).join('')}
+      </table>
+      ${note ? `<p style="margin:16px 0 0;font-size:14px;color:#b4472b">${escapeHtml(note)}</p>` : ''}
+      <p style="margin:20px 0 0;font-size:13px;color:#67707f">
+        Keep this where you would keep resident records: it holds names,
+        addresses, phone numbers and password hashes. To put it back, run
+        <code>npm run migrate</code> and then
+        <code>npm run restore -- &lt;file&gt;</code> against the new database.</p>`),
+    ...(file ? { attachments: [{ filename, content: file }] } : {}),
+  }),
+
   ticket_comment: ({ ticket, comment, author }) => ({
     subject: `[${ticket.ticket_number}] New comment on ${ticket.title}`,
     html: layout('New comment on your ticket', `
@@ -268,7 +286,14 @@ const send = async (templateName, to, context = {}) => {
       return { status: 'skipped', subject };
     }
 
-    await mailer.sendMail({ from: config.mail.from, to, subject, html: rendered.html });
+    await mailer.sendMail({
+      from: config.mail.from,
+      to,
+      subject,
+      html: rendered.html,
+      // A template may return files to send with it; nothing else does.
+      ...(rendered.attachments ? { attachments: rendered.attachments } : {}),
+    });
     await logEmail({ ticketId: ticket?.id, to, subject, template: templateName, status: 'sent' });
     return { status: 'sent', subject };
   } catch (err) {
@@ -452,7 +477,14 @@ const verifyAtStartup = async () => {
   return result;
 };
 
+/**
+ * Drops the cached transport so a later call rebuilds it from the current
+ * config. Only the tests need this: nothing changes mail settings at runtime.
+ */
+const __resetTransportForTests = () => { transporter = undefined; };
+
 module.exports = {
+  __resetTransportForTests,
   send,
   describeTransport,
   notify,

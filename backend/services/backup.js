@@ -7,6 +7,8 @@
  * the one that drifted would be discovered during a restore.
  */
 const db = require('./../db/connection');
+const config = require('../config');
+const email = require('./email');
 
 /**
  * Parent tables first. A restore inserts in this order so a foreign key never
@@ -102,4 +104,97 @@ const filenameFor = (payload) => {
   return `tsv-${stamp}.json`;
 };
 
-module.exports = { TABLES, exportDatabase, findUnlisted, readSequences, countRows, filenameFor };
+/**
+ * Above this, the attachment stops being something a mail provider will
+ * carry. The email still goes out, saying so, because a backup that silently
+ * stopped arriving is exactly the failure this is built to avoid -- the
+ * notice is what turns it into something somebody acts on.
+ */
+const maxAttachmentBytes = () => config.backupMaxAttachmentBytes;
+
+/** When a backup was last successfully emailed, or null if never. */
+const lastBackupEmailAt = async () => {
+  const { rows } = await db.query(
+    `SELECT max(sent_at) AS at FROM email_logs
+      WHERE template = 'database_backup' AND status = 'sent'`,
+  );
+  return rows[0].at || null;
+};
+
+/** Builds a backup and emails it to ADMIN_NOTIFY_EMAIL. */
+const emailBackup = async () => {
+  const to = config.mail.adminNotify;
+  if (!to) return { status: 'skipped', reason: 'ADMIN_NOTIFY_EMAIL is not set' };
+
+  const payload = await exportDatabase();
+  const json = Buffer.from(`${JSON.stringify(payload, null, 2)}\n`);
+  const filename = filenameFor(payload);
+  const counts = countRows(payload);
+
+  const tooBig = json.length > maxAttachmentBytes();
+  const result = await email.notify('database_backup', to, {
+    filename,
+    counts,
+    file: tooBig ? null : json,
+    note: tooBig
+      ? `The backup is ${(json.length / 1024 / 1024).toFixed(1)} MB, too large to attach. `
+        + 'Take it from People -> Download a backup instead.'
+      : null,
+  });
+
+  return { status: result.status, filename, bytes: json.length, counts, attached: !tooBig };
+};
+
+/**
+ * Emails a backup if the last one is older than BACKUP_EMAIL_DAYS.
+ *
+ * Deliberately driven by "is one overdue?" rather than by a clock. A free
+ * Render service sleeps after fifteen idle minutes, so a timer that fires at
+ * 3am fires into a process that does not exist. This runs at every boot and
+ * hourly while awake, which means the backup goes out the next time anything
+ * touches the site -- late, sometimes, but it goes out. A cron that silently
+ * never ran would not.
+ */
+const maybeEmailBackup = async () => {
+  if (!config.mail.adminNotify) return { status: 'skipped', reason: 'no ADMIN_NOTIFY_EMAIL' };
+  if (!email.isConfigured()) return { status: 'skipped', reason: 'no mail transport' };
+
+  const last = await lastBackupEmailAt();
+  const dueAfterMs = config.backupEmailDays * 24 * 60 * 60 * 1000;
+  if (last && Date.now() - new Date(last).getTime() < dueAfterMs) {
+    return { status: 'not-due', last };
+  }
+
+  return emailBackup();
+};
+
+/** Runs the check now, and again every hour for as long as the process lives. */
+const startScheduler = () => {
+  const run = () => maybeEmailBackup()
+    .then((result) => {
+      if (result.status === 'sent') {
+        console.log(`Backup: emailed ${result.filename} (${(result.bytes / 1024).toFixed(1)} KB)`);
+      } else if (result.status === 'failed') {
+        console.error(`Backup: could not email ${result.filename} -- see email_logs`);
+      }
+    })
+    .catch((err) => console.error('Backup: scheduled run failed:', err.message));
+
+  run();
+  // Must not hold the event loop open: shutdown should not wait on a timer.
+  return setInterval(run, 60 * 60 * 1000).unref();
+};
+
+module.exports = {
+  TABLES,
+  exportDatabase,
+  findUnlisted,
+  readSequences,
+  countRows,
+  filenameFor,
+  lastBackupEmailAt,
+  emailBackup,
+  maybeEmailBackup,
+  startScheduler,
+  maxAttachmentBytes,
+};
