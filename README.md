@@ -166,7 +166,7 @@ The current database, `tsv-db`, expires on **17 October 2026**.
 |---|---|---|
 | All the code | This GitHub repository | Yes |
 | The database structure (tables) | `backend/db/schema.sql` | Yes, recreated automatically on every deploy |
-| These instructions | This README | Yes |
+| These instructions | This README and [RESTORE.md](RESTORE.md) | Yes |
 | The data (accounts, tickets, comments) | The database | **No**, unless you save a backup file first (below) |
 | Environment variable values | Render dashboard | Yes, they belong to the web service, not the database |
 
@@ -179,8 +179,8 @@ Nothing needs installing. It runs in a GitHub Codespace, which is a free
 computer in your browser that already has this project on it.
 
 1. **Get the database address.** In Render, open the database `tsv-db` →
-   **Info** (or **Connect**) → copy the **External Database URL**. It
-   contains the database password, so paste it only where these steps say.
+   **Connect** → **External** tab → copy the URL. It contains the database
+   password, so paste it only where these steps say.
 2. **Open a Codespace.** On this repository's GitHub page: **Code →
    Codespaces → Create codespace on main**. Wait for it to finish setting up,
    about 2–3 minutes, until the terminal at the bottom is ready.
@@ -208,67 +208,8 @@ below starts empty.
 
 ### Rebuilding after it expires
 
-About 10 minutes, all in the Render dashboard:
-
-1. **Create a new database.** New → PostgreSQL, Free plan. Any name works,
-   for example `tsv-db-2`. The app only reads the connection string, never the
-   name.
-2. **Connect it.** Open the new database, copy its **Internal Database URL**.
-   Open the web service → **Environment** → set `DATABASE_URL` to that value
-   → Save.
-3. **Redeploy.** Saving usually triggers it. If not: **Manual Deploy → Deploy
-   latest commit**. The build creates every table automatically.
-4. **Check it.** Visit `/api/health` on your site. It should say
-   `"status":"ok"`.
-5. **Create your manager account again.** On the free plan there is no server
-   terminal, so:
-   - In **Environment**, add `STAFF_INVITE_CODE` with any long random value.
-     Save and let it redeploy.
-   - On the site, go to **Create an account**, choose **Management**, enter
-     that code.
-   - Back in **Environment**, delete `STAFF_INVITE_CODE`. While it is set,
-     anyone who guesses it can make themselves a manager.
-6. **Register the test homeowner accounts again**, or skip this if you do not
-   need them.
-
-**If you saved a backup file**, do this *instead of* steps 5 and 6. Your
-old accounts, passwords and tickets all come back, so there's nothing to
-re-register.
-
-1. In Render, open the **new** database → copy its **External Database URL**.
-2. Open a Codespace as before: **Code → Codespaces → Create codespace on
-   main**, and wait for the terminal.
-3. Drag your backup `.json` file from your computer into the `backups` folder
-   in the Codespace file list. Create the folder first if it isn't there.
-4. In the terminal, one line at a time:
-
-   ```bash
-   cd backend
-   echo 'DATABASE_URL=<paste the NEW External Database URL here>' > .env
-   npm run restore -- ../backups/<your backup file name>.json
-   ```
-
-   It ends with `Restored N rows`. If it says the database already has rows,
-   you registered an account after step 4 above. Add `--force` to the end of
-   the last line to replace them.
-5. Sign in on the site with your old manager password.
-6. Delete the Codespace as before.
-
-### Environment variables on the web service
-
-These live on the web service, so they survive the database being deleted.
-Only `DATABASE_URL` changes during a rebuild.
-
-| Variable | Value |
-|---|---|
-| `DATABASE_URL` | The database connection string. The only one that changes |
-| `NODE_ENV` | `production` |
-| `SERVE_FRONTEND` | `true` |
-| `JWT_SECRET` | Long random string. Changing it signs everyone out, nothing else |
-| `RESEND_API_KEY` | Sends all email. Render blocks normal email (SMTP), so this is required for any email to arrive |
-| `MAIL_FROM` | The sender address, on the domain verified in Resend |
-| `ADMIN_NOTIFY_EMAIL` | Your address, for new-account alerts |
-| `OFFICE_EMAIL` | `office@townsquarevillagenj.com` |
+Follow **[RESTORE.md](RESTORE.md)**: one page covering the new database,
+reconnecting the site, loading the backup file, and what to do without one.
 
 ### To avoid all of this
 
