@@ -130,9 +130,7 @@ Then register at <http://localhost:3000/register>. Management signup needs the
 
 ## Deploying
 
-See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** to put it up, and
-**[docs/RECOVERY.md](docs/RECOVERY.md)** to bring it back after the database
-is gone. The app deploys as one
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**. The app deploys as one
 service: the API serves the built frontend, so there is one process, one port
 and one origin. `render.yaml` provisions the service and its database on Render
 in one step; the same build and run commands work on any host that provides
@@ -157,6 +155,91 @@ Two things to do before real residents use it:
 The app deliberately refuses to start under `NODE_ENV=production` with a
 missing, short or placeholder `JWT_SECRET`, no database configuration, or a
 placeholder `STAFF_INVITE_CODE`. A boot failure there is the guard working.
+
+## When the free database expires
+
+This runs on Render's free tier as a proof of concept. Render deletes a free
+database **30 days after it is created**. After that there is a 14-day grace
+period where only upgrading to a paid plan gets it back. Then the database and
+everything in it is gone.
+
+The current database, `tsv-db`, expires on **17 October 2026**.
+
+### What survives and what does not
+
+| Item | Where it lives | Survives? |
+|---|---|---|
+| All the code | This GitHub repository | Yes |
+| The database structure (tables) | `backend/db/schema.sql` | Yes, recreated automatically on every deploy |
+| These instructions | This README | Yes |
+| The data (accounts, tickets, comments) | The database | **No**, unless you download a backup first |
+| Environment variable values | Render dashboard | Yes, they belong to the web service, not the database |
+
+### Before it expires (optional)
+
+The data is test data, so losing it is fine. To keep it anyway, sign in as a
+manager, go to **People**, click **Download a backup**, and save the `.json`
+file. An expired database cannot be downloaded from, so this only works
+before the 17th.
+
+### Rebuilding after it expires
+
+About 10 minutes, all in the Render dashboard:
+
+1. **Create a new database.** New → PostgreSQL, Free plan. Any name works,
+   for example `tsv-db-2`. The app only reads the connection string, never the
+   name.
+2. **Connect it.** Open the new database, copy its **Internal Database URL**.
+   Open the web service → **Environment** → set `DATABASE_URL` to that value
+   → Save.
+3. **Redeploy.** Saving usually triggers it. If not: **Manual Deploy → Deploy
+   latest commit**. The build creates every table automatically.
+4. **Check it.** Visit `/api/health` on your site. It should say
+   `"status":"ok"`.
+5. **Create your manager account again.** On the free plan there is no server
+   terminal, so:
+   - In **Environment**, add `STAFF_INVITE_CODE` with any long random value.
+     Save and let it redeploy.
+   - On the site, go to **Create an account**, choose **Management**, enter
+     that code.
+   - Back in **Environment**, delete `STAFF_INVITE_CODE`. While it is set,
+     anyone who guesses it can make themselves a manager.
+6. **Register the test homeowner accounts again**, or skip this if you do not
+   need them.
+
+**If you downloaded a backup** and want the old data back instead of steps 5
+and 6: open this repository in a GitHub Codespace (**Code → Codespaces →
+Create codespace on main**), then in its terminal:
+
+```bash
+cd backend
+echo 'DATABASE_URL=<paste the new database External Database URL>' > .env
+npm run restore -- <your backup file>.json
+```
+
+Upload the backup file into the Codespace first (drag it into the file list).
+Old accounts, passwords and tickets all come back.
+
+### Environment variables on the web service
+
+These live on the web service, so they survive the database being deleted.
+Only `DATABASE_URL` changes during a rebuild.
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | The database connection string. The only one that changes |
+| `NODE_ENV` | `production` |
+| `SERVE_FRONTEND` | `true` |
+| `JWT_SECRET` | Long random string. Changing it signs everyone out, nothing else |
+| `RESEND_API_KEY` | Sends all email. Render blocks normal email (SMTP), so this is required for any email to arrive |
+| `MAIL_FROM` | The sender address, on the domain verified in Resend |
+| `ADMIN_NOTIFY_EMAIL` | Your address, for new-account alerts |
+| `OFFICE_EMAIL` | `office@townsquarevillagenj.com` |
+
+### To avoid all of this
+
+Upgrade the database to Render's paid plan (about $6 a month) before 17
+October. Nothing expires and none of the steps above are needed.
 
 ## Development
 

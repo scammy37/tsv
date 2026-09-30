@@ -126,14 +126,7 @@ Past `BACKUP_MAX_ATTACHMENT_BYTES` (default 8 MB) the email goes without the
 file and says so, rather than failing to send. A backup that quietly stopped
 arriving is the failure the whole thing exists to prevent.
 
-**People → Email it to me** sends one immediately, ignoring the schedule, and
-reports the address it went to. That is the way to find out whether the daily
-backup is really arriving without waiting a day to discover it is not — and
-the address matters, because the usual failure is not broken mail but
-`ADMIN_NOTIFY_EMAIL` pointing at an inbox nobody reads.
-
-Set `BACKUP_EMAIL_DAYS=0` to turn the automatic emails off and keep the
-buttons.
+Set `BACKUP_EMAIL_DAYS=0` to turn the emails off and keep the button.
 
 ### Without a terminal
 
@@ -301,7 +294,6 @@ requires `Authorization: Bearer <token>`.
 | POST | `/users/:id/reset-password` | Management only. Returns `{ user, temporaryPassword }`; the plaintext appears in this response and nowhere else |
 | GET | `/reports/summary` | Volume, timing and workload figures; staff only |
 | GET | `/admin/export` | The whole database as one JSON file; management only. Set `DB_EXPORT=off` to refuse it |
-| POST | `/admin/export/email` | Emails a backup now, ignoring the daily schedule. Answers with the address it used, which is how you find out whether `ADMIN_NOTIFY_EMAIL` points anywhere useful |
 | GET | `/health` | Public |
 
 ## Ticket lifecycle

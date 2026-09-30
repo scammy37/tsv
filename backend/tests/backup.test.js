@@ -1,6 +1,6 @@
 const http = require('http');
 
-const { app, db, request, resetDatabase, createUser, createTicket } = require('./helpers');
+const { db, resetDatabase, createUser, createTicket } = require('./helpers');
 const config = require('../config');
 const backup = require('../services/backup');
 const email = require('../services/email');
@@ -176,80 +176,5 @@ describe('scheduled database backup', () => {
 
     config.resend.apiKey = key;
     email.__resetTransportForTests();
-  });
-});
-
-describe('POST /api/admin/export/email', () => {
-  it('sends one now, ignoring the schedule, and names the address', async () => {
-    const manager = await createUser({ role: 'management' });
-    await email.flush();
-    stub.sent.length = 0;
-
-    const first = await request(app).post('/api/admin/export/email')
-      .set('Authorization', manager.auth());
-
-    expect(first.status).toBe(200);
-    expect(first.body.sentTo).toBe('backups@example.test');
-    expect(first.body.filename).toMatch(/^tsv-.*\.json$/);
-    expect(first.body.attached).toBe(true);
-
-    // A second straight away must still send. The whole point of this route
-    // is to test delivery, and "not due yet" would be a useless answer.
-    const second = await request(app).post('/api/admin/export/email')
-      .set('Authorization', manager.auth());
-
-    expect(second.status).toBe(200);
-    expect(backupsSent()).toHaveLength(2);
-  });
-
-  it('attaches a file a restore could read', async () => {
-    const manager = await createUser({ role: 'management' });
-    const homeowner = await createUser();
-    await createTicket(homeowner);
-    await email.flush();
-    stub.sent.length = 0;
-
-    await request(app).post('/api/admin/export/email').set('Authorization', manager.auth());
-
-    const payload = attachedExport(backupsSent()[0]);
-    expect(payload.tables.users.map((u) => u.email)).toContain(homeowner.email);
-    expect(payload.sequences.ticket_number_seq).toBeDefined();
-  });
-
-  it('says which setting is missing rather than failing vaguely', async () => {
-    const manager = await createUser({ role: 'management' });
-    await email.flush();
-    stub.sent.length = 0;
-
-    config.mail.adminNotify = '';
-    const noAddress = await request(app).post('/api/admin/export/email')
-      .set('Authorization', manager.auth());
-    expect(noAddress.status).toBe(400);
-    expect(noAddress.body.error).toMatch(/ADMIN_NOTIFY_EMAIL/);
-    config.mail.adminNotify = 'backups@example.test';
-
-    const key = config.resend.apiKey;
-    config.resend.apiKey = '';
-    email.__resetTransportForTests();
-    const noTransport = await request(app).post('/api/admin/export/email')
-      .set('Authorization', manager.auth());
-    expect(noTransport.status).toBe(400);
-    expect(noTransport.body.error).toMatch(/RESEND_API_KEY/);
-    config.resend.apiKey = key;
-    email.__resetTransportForTests();
-
-    expect(backupsSent()).toHaveLength(0);
-  });
-
-  it('is refused to staff, homeowners and anyone signed out', async () => {
-    const staff = await createUser({ role: 'staff' });
-    const homeowner = await createUser();
-    await email.flush();
-
-    expect((await request(app).post('/api/admin/export/email')
-      .set('Authorization', staff.auth())).status).toBe(403);
-    expect((await request(app).post('/api/admin/export/email')
-      .set('Authorization', homeowner.auth())).status).toBe(403);
-    expect((await request(app).post('/api/admin/export/email')).status).toBe(401);
   });
 });

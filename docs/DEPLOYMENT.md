@@ -18,13 +18,7 @@ frontend/build ──served by──> backend (Express) ──> PostgreSQL
 | `NODE_ENV` | yes | `production` |
 | `SERVE_FRONTEND` | yes | `true`, for the single-service shape above |
 | `PORT` | usually | Most hosts set this themselves |
-| `RESEND_API_KEY` | for email | Sends over HTTPS. **The only option on a host that blocks outbound SMTP, which Render does.** Without an email transport, no notification is ever delivered |
-| `MAIL_FROM` | with Resend | The sender. Must be on a domain verified with the provider |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | alternative | Only where outbound SMTP is permitted. Ignored when `RESEND_API_KEY` is set |
-| `ADMIN_NOTIFY_EMAIL` | recommended | Gets the new-account alerts and the automatic database backups. Any address; need not be a user of the site |
-| `OFFICE_EMAIL` | no | Quoted as the way to reach a person in emails with no request to point at |
-| `BACKUP_EMAIL_DAYS` | no | How stale an emailed backup may get before another is sent. Default 1; `0` turns them off |
-| `DB_EXPORT` | no | `off` refuses `GET /api/admin/export`, the People → Download a backup button |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | for email | Without these **no notification is ever delivered** — see below |
 | `FRONTEND_URL` | for links | The public URL. Used in emailed links, and for CORS if you ever split the frontend out. |
 | `STAFF_INVITE_CODE` | no | Leave **blank** in production and use `npm run create-admin` instead |
 | `DB_SSL` | no | Set to `disable` only for a provider that does not use TLS |
@@ -46,33 +40,23 @@ service and its PostgreSQL database together, already wired to each other.
 3. Wait for the first deploy. The build installs both halves, builds the
    frontend and applies migrations; the health check at `/api/health` goes
    green once the server is up and talking to the database.
-4. Add `RESEND_API_KEY`, `MAIL_FROM` and `ADMIN_NOTIFY_EMAIL` under
-   **Environment** on the service, and let it redeploy. Keep them in the
-   dashboard, never in `render.yaml` — that file is committed. Do not bother
-   with `SMTP_*` here: Render blocks outbound SMTP, and every port and
-   provider tried from it timed out.
+4. Add the `SMTP_*` values under **Environment** on the service, if you want
+   email, and let it redeploy. Keep them in the dashboard, never in
+   `render.yaml` — that file is committed.
 5. Create the first manager (see below). Render's **Shell** tab is only
-   available on paid instance types, and `render.yaml` ships without a
-   `STAFF_INVITE_CODE`, so on a free instance *neither* route works until you
-   set that code in the dashboard yourself — then clear it once your manager
-   exists. [RECOVERY.md](RECOVERY.md#5-getting-back-in) spells this out.
+   available on paid instance types, so on a free instance use the invite-code
+   route rather than `create-admin`.
 
 `FRONTEND_URL` needs no configuration here: Render exports the public URL as
 `RENDER_EXTERNAL_URL` and the app falls back to it, so password reset links
 point at the real deployment from the first boot.
 
 Two properties of Render's free tier worth knowing before residents rely on
-this. A free web service sleeps after fifteen idle minutes, so the first
-request after a quiet spell waits out a cold start. And a **free database is
-removed 30 days after it is created** — with a 14-day grace period in which
-only upgrading restores access, after which Render deletes it and its data.
-
-**An expired database cannot be exported**, so a backup has to exist before
-the deadline rather than after the problem. Set `ADMIN_NOTIFY_EMAIL` and the
-server emails one to that address daily on its own. If the worst happens
-anyway, [RECOVERY.md](RECOVERY.md) is the way back.
-
-Both limits are lifted by paid plans; neither is a code problem.
+this: a free web service sleeps after inactivity, so the first request after a
+quiet spell waits for a cold start, and a **free database is removed 30 days
+after it is created**. Both are lifted by paid plans; neither is a code
+problem. See [When the free database expires](../README.md#when-the-free-database-expires)
+in the README for what to do.
 
 ## Any other host (Railway, Fly, a VM)
 

@@ -5,7 +5,6 @@ const { authenticate, authorize } = require('../middleware/auth');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 const backup = require('../services/backup');
-const email = require('../services/email');
 const { ROLES } = require('../constants');
 
 const router = express.Router();
@@ -53,61 +52,6 @@ router.get('/export', asyncHandler(async (req, res) => {
   // Never let a proxy or the browser keep a copy of this.
   res.setHeader('Cache-Control', 'no-store');
   res.send(JSON.stringify(payload, null, 2));
-}));
-
-/**
- * POST /api/admin/export/email
- *
- * Sends a backup right now, ignoring the "is one overdue?" schedule.
- *
- * This is how you find out whether the automatic backups are arriving,
- * without waiting a day to discover that they are not. It reports the address
- * it used, because the commonest failure by far is ADMIN_NOTIFY_EMAIL being
- * unset or pointing somewhere forgotten -- which is indistinguishable from
- * mail being broken until something says which address it tried.
- */
-router.post('/export/email', asyncHandler(async (req, res) => {
-  // Logged on the way in, not only on the way out. Without this there is no
-  // way to tell a request that failed inside the app from one that never
-  // reached it -- and those have completely different causes.
-  console.log(`Backup: email requested by ${req.user.email} (user ${req.user.id})`);
-
-  if (!config.allowDbExport) {
-    throw AppError.forbidden('Database export is turned off (DB_EXPORT=off)');
-  }
-  if (!config.mail.adminNotify) {
-    throw AppError.badRequest(
-      'No address to send to. Set ADMIN_NOTIFY_EMAIL on the server and redeploy.',
-    );
-  }
-  if (!email.isConfigured()) {
-    throw AppError.badRequest(
-      'No mail transport is configured. Set RESEND_API_KEY on the server and redeploy.',
-    );
-  }
-
-  const result = await backup.emailBackup();
-
-  if (result.status !== 'sent') {
-    // Notifications are best-effort everywhere else in this app, but a test
-    // that answers "sent" when nothing was sent is worse than no test at all.
-    throw AppError.badGateway(
-      `The backup was built but could not be emailed to ${result.to}. `
-      + 'The provider\'s reason is in email_logs and in the server log.',
-    );
-  }
-
-  console.log(
-    `AUDIT backup emailed on request by ${req.user.email} (user ${req.user.id}) to ${result.to}`,
-  );
-
-  res.json({
-    sentTo: result.to,
-    filename: result.filename,
-    bytes: result.bytes,
-    attached: result.attached,
-    counts: result.counts,
-  });
 }));
 
 module.exports = router;

@@ -42,37 +42,16 @@ client.interceptors.response.use(
  * own message and its per-field validation detail.
  */
 export const errorMessage = (error, fallback = 'Something went wrong') => {
-  const status = error?.response?.status;
   const data = error?.response?.data;
-
   if (!data) {
-    if (error?.message === 'Network Error') {
-      return 'Cannot reach the server. Is the API running?';
-    }
-    if (error?.code === 'ECONNABORTED') {
-      return `${fallback} — the request timed out before the server answered.`;
-    }
-    // A reply with no body at all. The status is the only thing that says
-    // anything, and without it this reads as though nothing happened.
-    return status ? `${fallback} (HTTP ${status})` : fallback;
+    return error?.message === 'Network Error'
+      ? 'Cannot reach the server. Is the API running?'
+      : fallback;
   }
-
   if (data.details?.length) {
     return data.details.map((d) => d.message).join('. ');
   }
-  if (data.error) return data.error;
-
-  // Something answered that was not this API -- a proxy's error page, or the
-  // platform's, which arrives as HTML rather than JSON. Saying only "something
-  // went wrong" hides the one fact that identifies it.
-  if (typeof data === 'string' && data.trim()) {
-    const looksLikeHtml = /^\s*<|<html/i.test(data);
-    return looksLikeHtml
-      ? `${fallback} (HTTP ${status ?? '?'} — the reply came from the host, not the app, `
-        + 'so the request never reached it or the app restarted mid-request)'
-      : `${fallback} (HTTP ${status ?? '?'}: ${data.slice(0, 120)})`;
-  }
-  return status ? `${fallback} (HTTP ${status})` : fallback;
+  return data.error || fallback;
 };
 
 export const api = {
