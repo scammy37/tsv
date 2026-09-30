@@ -67,6 +67,11 @@ router.get('/export', asyncHandler(async (req, res) => {
  * mail being broken until something says which address it tried.
  */
 router.post('/export/email', asyncHandler(async (req, res) => {
+  // Logged on the way in, not only on the way out. Without this there is no
+  // way to tell a request that failed inside the app from one that never
+  // reached it -- and those have completely different causes.
+  console.log(`Backup: email requested by ${req.user.email} (user ${req.user.id})`);
+
   if (!config.allowDbExport) {
     throw AppError.forbidden('Database export is turned off (DB_EXPORT=off)');
   }
