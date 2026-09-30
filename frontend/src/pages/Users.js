@@ -32,6 +32,10 @@ export default function Users() {
   const [notice, setNotice] = useState('');
   const [busyId, setBusyId] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [emailing, setEmailing] = useState(false);
+  // Both buttons build the same export, so neither should start while the
+  // other is running.
+  const busyBackup = exporting || emailing;
 
   // Which account is awaiting confirmation of a reset, and the credential
   // handed back by the last one. `issued` holds the only copy of that password
@@ -175,6 +179,31 @@ export default function Users() {
     }
   };
 
+  /**
+   * Sends a backup by email now, rather than waiting for the daily one.
+   *
+   * The address comes back in the response and is shown, because the failure
+   * this is here to catch is usually not "mail is broken" but "it has been
+   * going somewhere nobody reads".
+   */
+  const emailBackup = async () => {
+    setEmailing(true);
+    setError('');
+    setNotice('');
+    try {
+      const { data } = await api.post('/admin/export/email');
+      setNotice(
+        `Emailed ${data.filename} to ${data.sentTo}`
+        + `${data.attached ? '' : ' — without the file, which was too large to attach'}`
+        + '. Give it a minute, and check spam if it does not appear.',
+      );
+    } catch (err) {
+      setError(errorMessage(err, 'Could not email a backup'));
+    } finally {
+      setEmailing(false);
+    }
+  };
+
   return (
     <>
       <div className="page-head">
@@ -182,12 +211,17 @@ export default function Users() {
           <h1>People</h1>
           <p>Homeowners and managers with access to the portal.</p>
         </div>
-        <div>
-          <button type="button" className="secondary" onClick={downloadBackup} disabled={exporting}>
+        <div style={{ textAlign: 'right' }}>
+          <button type="button" className="secondary" onClick={downloadBackup} disabled={busyBackup}>
             {exporting ? 'Preparing…' : 'Download a backup'}
           </button>
-          <p className="field-hint" style={{ marginTop: 6, maxWidth: 260, textAlign: 'right' }}>
-            Every account, request and comment, as one file.
+          {' '}
+          <button type="button" className="secondary" onClick={emailBackup} disabled={busyBackup}>
+            {emailing ? 'Sending…' : 'Email it to me'}
+          </button>
+          <p className="field-hint" style={{ marginTop: 6, maxWidth: 320, textAlign: 'right' }}>
+            Every account, request and comment, as one file. A copy is emailed
+            on its own each day; this is how to check that it arrives.
           </p>
         </div>
       </div>

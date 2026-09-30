@@ -142,7 +142,7 @@ const emailBackup = async () => {
       : null,
   });
 
-  return { status: result.status, filename, bytes: json.length, counts, attached: !tooBig };
+  return { status: result.status, to, filename, bytes: json.length, counts, attached: !tooBig };
 };
 
 /**
