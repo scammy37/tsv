@@ -59,11 +59,6 @@ run by Taylor Management. One obvious call to action — submit a request.
 - Reports: volume, average resolution and first-response time, per-category and
   per-assignee breakdowns, daily volume, and what is ageing
 - People directory: promote, demote, deactivate, and issue a temporary password
-- **Download a backup** — the whole database as one JSON file, from the
-  browser, with no database password on anybody's laptop
-- A backup emailed automatically whenever the last one is more than a day old,
-  driven by staleness rather than a clock so it still works on a host that
-  sleeps the service when idle
 - Email notice when somebody creates an account, to every manager and to
   `ADMIN_NOTIFY_EMAIL` — which can be a personal address, and need not be a
   user of the site
@@ -172,15 +167,44 @@ The current database, `tsv-db`, expires on **17 October 2026**.
 | All the code | This GitHub repository | Yes |
 | The database structure (tables) | `backend/db/schema.sql` | Yes, recreated automatically on every deploy |
 | These instructions | This README | Yes |
-| The data (accounts, tickets, comments) | The database | **No**, unless you download a backup first |
+| The data (accounts, tickets, comments) | The database | **No**, unless you save a backup file first (below) |
 | Environment variable values | Render dashboard | Yes, they belong to the web service, not the database |
 
-### Before it expires (optional)
+### Before it expires: save a backup file
 
-The data is test data, so losing it is fine. To keep it anyway, sign in as a
-manager, go to **People**, click **Download a backup**, and save the `.json`
-file. An expired database cannot be downloaded from, so this only works
-before the 17th.
+This gives you the one file you need to restore everything later. It only
+works **before 17 October**. An expired database cannot be read from.
+
+Nothing needs installing. It runs in a GitHub Codespace, which is a free
+computer in your browser that already has this project on it.
+
+1. **Get the database address.** In Render, open the database `tsv-db` →
+   **Info** (or **Connect**) → copy the **External Database URL**. It
+   contains the database password, so paste it only where these steps say.
+2. **Open a Codespace.** On this repository's GitHub page: **Code →
+   Codespaces → Create codespace on main**. Wait for it to finish setting up,
+   about 2–3 minutes, until the terminal at the bottom is ready.
+3. **Make the backup.** In that terminal, paste these lines one at a time,
+   putting your URL between the quotes:
+
+   ```bash
+   cd backend
+   echo 'DATABASE_URL=<paste the External Database URL here>' > .env
+   npm run export
+   ```
+
+   It lists what it saved, for example `6 users`, `10 tickets`, and ends with
+   `Wrote .../backups/tsv-<date>.json`.
+4. **Download the file.** In the file list on the left, open the `backups`
+   folder, right-click the `.json` file → **Download**. Keep it somewhere
+   safe, like a private folder in Google Drive. It contains residents' names,
+   addresses and password hashes, so don't share it.
+5. **Close the Codespace.** GitHub → **Code → Codespaces** → the `…` next to
+   it → **Delete**. The `.env` file and the backup are gitignored, so neither
+   was ever uploaded to GitHub, and deleting the Codespace removes both.
+
+The data is test data, so skipping this is fine too. Without it, the rebuild
+below starts empty.
 
 ### Rebuilding after it expires
 
@@ -207,18 +231,28 @@ About 10 minutes, all in the Render dashboard:
 6. **Register the test homeowner accounts again**, or skip this if you do not
    need them.
 
-**If you downloaded a backup** and want the old data back instead of steps 5
-and 6: open this repository in a GitHub Codespace (**Code → Codespaces →
-Create codespace on main**), then in its terminal:
+**If you saved a backup file**, do this *instead of* steps 5 and 6. Your
+old accounts, passwords and tickets all come back, so there's nothing to
+re-register.
 
-```bash
-cd backend
-echo 'DATABASE_URL=<paste the new database External Database URL>' > .env
-npm run restore -- <your backup file>.json
-```
+1. In Render, open the **new** database → copy its **External Database URL**.
+2. Open a Codespace as before: **Code → Codespaces → Create codespace on
+   main**, and wait for the terminal.
+3. Drag your backup `.json` file from your computer into the `backups` folder
+   in the Codespace file list. Create the folder first if it isn't there.
+4. In the terminal, one line at a time:
 
-Upload the backup file into the Codespace first (drag it into the file list).
-Old accounts, passwords and tickets all come back.
+   ```bash
+   cd backend
+   echo 'DATABASE_URL=<paste the NEW External Database URL here>' > .env
+   npm run restore -- ../backups/<your backup file name>.json
+   ```
+
+   It ends with `Restored N rows`. If it says the database already has rows,
+   you registered an account after step 4 above. Add `--force` to the end of
+   the last line to replace them.
+5. Sign in on the site with your old manager password.
+6. Delete the Codespace as before.
 
 ### Environment variables on the web service
 

@@ -7,10 +7,6 @@
  *
  * Restore it with `npm run restore`.
  *
- * Managers can get the identical file without a terminal, from
- * People -> Download a backup, which calls GET /api/admin/export. Both go
- * through services/backup.js, so they cannot diverge.
- *
  * Why this exists alongside `npm run backup`, which runs pg_dump:
  *
  *   pg_dump refuses to read a server newer than itself, and managed hosts run
@@ -30,19 +26,81 @@ const path = require('path');
 
 const db = require('../db/connection');
 const config = require('../config');
-const backup = require('../services/backup');
+
+/**
+ * Parent tables first. The restore inserts in this order so a foreign key
+ * never points at a row that has not been written yet.
+ */
+const TABLES = [
+  'categories',
+  'users',
+  'tickets',
+  'ticket_comments',
+  'ticket_activity',
+  'email_logs',
+  'password_reset_tokens',
+];
+
+/**
+ * Every table the database actually has, so a table added to schema.sql later
+ * cannot be quietly left out of every backup taken from then on. Being told
+ * about it is the whole point -- a backup that silently omits something is
+ * worse than no backup, because it is trusted.
+ */
+const findUnlisted = async () => {
+  const { rows } = await db.query(`
+    SELECT table_name FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`);
+  return rows.map((r) => r.table_name).filter((name) => !TABLES.includes(name));
+};
+
+/**
+ * Sequence positions, so ids carry on from where they left off rather than
+ * colliding with restored rows. ticket_number_seq matters most: reset to 1 it
+ * would hand out ticket numbers that already exist.
+ */
+const readSequences = async () => {
+  const { rows } = await db.query(`
+    SELECT sequencename AS name, last_value
+      FROM pg_sequences WHERE schemaname = 'public'`);
+  return Object.fromEntries(
+    rows
+      // A sequence never drawn from has no last_value; there is nothing to
+      // restore, and setval would move it forward for no reason.
+      .filter((r) => r.last_value !== null)
+      .map((r) => [r.name, String(r.last_value)]),
+  );
+};
 
 async function main() {
-  const payload = await backup.exportDatabase();
-
-  console.log(`Read ${config.dbLabel} (PostgreSQL ${payload.serverVersion})\n`);
-  const counts = backup.countRows(payload);
-  for (const [table, n] of Object.entries(counts)) {
-    console.log(`  ${String(n).padStart(6)}  ${table}`);
+  const unlisted = await findUnlisted();
+  if (unlisted.length) {
+    console.error(`These tables exist but are not in this script: ${unlisted.join(', ')}`);
+    console.error('Add them to TABLES, in an order that puts each after whatever it references.');
+    return 1;
   }
 
+  const { rows: version } = await db.query('SHOW server_version');
+  console.log(`Reading ${config.dbLabel} (PostgreSQL ${version[0].server_version})\n`);
+
+  const tables = {};
+  for (const table of TABLES) {
+    // eslint-disable-next-line no-await-in-loop
+    const { rows } = await db.query(`SELECT * FROM ${table}`);
+    tables[table] = rows;
+    console.log(`  ${String(rows.length).padStart(6)}  ${table}`);
+  }
+
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    serverVersion: version[0].server_version,
+    tables,
+    sequences: await readSequences(),
+  };
+
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, 19);
   const target = process.argv[2]
-    || path.join(__dirname, '..', '..', 'backups', backup.filenameFor(payload));
+    || path.join(__dirname, '..', '..', 'backups', `tsv-${stamp}.json`);
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, `${JSON.stringify(payload, null, 2)}\n`);
 
