@@ -20,16 +20,28 @@ services:
       # transport or store a secret by hand.
       - key: JWT_SECRET
         generateValue: true
+      # The name here must match the one under `databases:` below. Rebuilding
+      # against a new database means changing both together -- the app itself
+      # only ever reads DATABASE_URL, so the name is arbitrary, but Render
+      # resolves this reference by it.
       - key: DATABASE_URL
         fromDatabase:
           name: tsv-db
           property: connectionString
       # STAFF_INVITE_CODE is deliberately absent: with no value, staff
-      # self-registration is refused and the first manager comes from
-      # `npm run create-admin`. SMTP_* belong in the dashboard, not here --
-      # this file is committed.
+      # self-registration is refused outright. The first manager then has to
+      # come from `npm run create-admin`, which needs a shell -- a paid
+      # feature on Render. On a free instance, set STAFF_INVITE_CODE in the
+      # dashboard, register, and clear it again. docs/RECOVERY.md has this.
+      #
+      # RESEND_API_KEY, MAIL_FROM and ADMIN_NOTIFY_EMAIL belong in the
+      # dashboard too, not here -- this file is committed. Without a mail
+      # transport nothing is ever delivered and no backup is ever emailed.
 
 databases:
+    # A free database is deleted 30 days after it is created, taking its data
+    # with it, and cannot be exported once it has expired. Fine for trying
+    # this out; change `plan` before anyone relies on it. See docs/RECOVERY.md.
   - name: tsv-db
     plan: free
     databaseName: tsv

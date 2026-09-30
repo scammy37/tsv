@@ -130,7 +130,9 @@ Then register at <http://localhost:3000/register>. Management signup needs the
 
 ## Deploying
 
-See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**. The app deploys as one
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** to put it up, and
+**[docs/RECOVERY.md](docs/RECOVERY.md)** to bring it back after the database
+is gone. The app deploys as one
 service: the API serves the built frontend, so there is one process, one port
 and one origin. `render.yaml` provisions the service and its database on Render
 in one step; the same build and run commands work on any host that provides
