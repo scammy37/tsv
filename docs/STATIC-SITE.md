@@ -85,6 +85,10 @@ there is no code or deploy to undo. You can leave `FRONTEND_URL` as it is,
 since it does no harm, and delete or **Suspend** the static site whenever you
 like.
 
+**Rolling back the code too** is never needed for switching back. If you want
+it anyway, the whole change is one commit, `236502d`, and reverting it on
+GitHub (or with `git revert 236502d`) returns the code to exactly how it was.
+
 ---
 
 ## Good to know
