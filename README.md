@@ -151,6 +151,12 @@ The app deliberately refuses to start under `NODE_ENV=production` with a
 missing, short or placeholder `JWT_SECRET`, no database configuration, or a
 placeholder `STAFF_INVITE_CODE`. A boot failure there is the guard working.
 
+**Optional, to stop the homepage waiting on a sleeping backend:** serve the
+website from a free Render static site, which never sleeps, and keep the
+backend where it is. Pages wake the backend themselves and say so while it
+starts. Setup, and how to switch back, are in
+**[docs/STATIC-SITE.md](docs/STATIC-SITE.md)**.
+
 ## When the free database expires
 
 This runs on Render's free tier as a proof of concept. Render deletes a free

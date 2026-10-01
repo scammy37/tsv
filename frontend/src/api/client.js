@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+import { API_BASE } from './base';
+import { ensureBackend, markApiAlive, markApiUnreachable } from './warmup';
+
 const TOKEN_KEY = 'tsv.token';
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
@@ -9,11 +12,14 @@ export const setToken = (token) => {
 };
 
 const client = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
 });
 
-client.interceptors.request.use((config) => {
+client.interceptors.request.use(async (config) => {
+  // A sleeping backend takes up to a minute to wake. Wait for it here, once,
+  // rather than let the request fail and the user try again.
+  await ensureBackend();
   const token = getToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
@@ -25,9 +31,16 @@ let onUnauthorized = () => {};
 export const setUnauthorizedHandler = (fn) => { onUnauthorized = fn; };
 
 client.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    markApiAlive();
+    return response;
+  },
   (error) => {
     const status = error.response?.status;
+    // Any answer at all, even an error, means the backend is awake. No answer
+    // means it may have gone back to sleep, so the next call checks first.
+    if (error.response) markApiAlive();
+    else markApiUnreachable();
     // A 401 on any call but the login attempt itself means the token is dead.
     if (status === 401 && !error.config?.url?.includes('/auth/login')) {
       setToken(null);

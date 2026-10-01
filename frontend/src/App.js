@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import WarmupNotice from './components/WarmupNotice';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -31,6 +32,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <WarmupNotice />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

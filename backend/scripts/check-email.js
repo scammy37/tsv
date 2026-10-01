@@ -45,7 +45,7 @@ async function main() {
   console.log(`\nSending a test message to ${recipient}...`);
   const sent = await email.send('password_reset', recipient, {
     user: { first_name: 'there' },
-    resetUrl: `${config.frontendUrl.split(',')[0]}/login`,
+    resetUrl: `${config.publicUrl}/login`,
     ttlMinutes: 60,
   });
 

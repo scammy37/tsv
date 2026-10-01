@@ -153,6 +153,25 @@ const describeDatabase = (db) => {
 
 config.dbLabel = describeDatabase(config.db);
 
+/**
+ * FRONTEND_URL may list several origins, comma-separated: the site's own
+ * domain, and the backend's Render address that also serves the site. Every
+ * one is allowed by CORS. The first is where emailed links point, so it
+ * should be the address residents know.
+ *
+ * Parsed once, here, because the alternative was each caller splitting it
+ * its own way -- and one of them not splitting it at all, which turns a list
+ * into a single broken link.
+ */
+const parseFrontendUrl = (raw) => String(raw || '')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+config.frontendOrigins = parseFrontendUrl(config.frontendUrl);
+config.publicUrl = config.frontendOrigins[0] || 'http://localhost:3000';
+config.parseFrontendUrl = parseFrontendUrl;
+
 // Exported so the no-credentials-in-the-label property can be tested against a
 // connection string, which NODE_ENV=test otherwise never takes.
 config.describeDatabase = describeDatabase;

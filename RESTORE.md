@@ -24,12 +24,13 @@ Without a backup file the site comes back empty and you skip Part 3.
 ## Part 2: Connect the site to it (Render)
 
 1. On the new database, click **Connect** → **Internal** tab → copy the URL.
-2. Open the web service (the site, not the database) → **Environment**.
+2. Open the **web service** `tsv-22a6`, the backend. Not the database, and
+   not the static site if you set one up. → **Environment**.
 3. Edit `DATABASE_URL` → paste the new URL → **Save Changes**.
 4. The site redeploys on its own, and the deploy creates all the tables. Wait
    for **Live**. If it doesn't start, use **Manual Deploy → Deploy latest
    commit**.
-5. Check: open `https://townsquarevillagenj.com/api/health`. It should
+5. Check: open `https://tsv-22a6.onrender.com/api/health`. It should
    show `"status":"ok"`.
 
 Leave every other setting alone. They belong to the site, not the database,

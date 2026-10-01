@@ -31,3 +31,44 @@ describe('describeDatabase', () => {
       .toBe('db.internal:5432');
   });
 });
+
+describe('parseFrontendUrl', () => {
+  const { parseFrontendUrl } = require('../config');
+
+  it('reads a single origin', () => {
+    expect(parseFrontendUrl('https://www.example.test')).toEqual(['https://www.example.test']);
+  });
+
+  it('reads a list, trimming spaces and trailing slashes', () => {
+    // How it gets typed into a dashboard by hand.
+    expect(parseFrontendUrl(' https://www.example.test/ , https://example.test,https://api.example.test/'))
+      .toEqual(['https://www.example.test', 'https://example.test', 'https://api.example.test']);
+  });
+
+  it('ignores empty entries', () => {
+    expect(parseFrontendUrl('https://a.test,,')).toEqual(['https://a.test']);
+    expect(parseFrontendUrl('')).toEqual([]);
+  });
+});
+
+describe('emailed links with several origins configured', () => {
+  it('point at the first origin only', () => {
+    const config = require('../config');
+    const { templates } = require('../services/email');
+    const saved = config.publicUrl;
+
+    // The shape FRONTEND_URL takes once the site and the backend live at
+    // different addresses. Glued together whole, this produced
+    // "https://www.example.test,https://api.example.test/tickets/12".
+    [config.publicUrl] = config.parseFrontendUrl(
+      'https://www.example.test, https://api.example.test',
+    );
+    const { html } = templates.ticket_created({
+      ticket: { id: 12, ticket_number: 'TSV-1', title: 'Gate', priority: 'low', status: 'open' },
+    });
+
+    config.publicUrl = saved;
+    expect(html).toContain('href="https://www.example.test/tickets/12"');
+    expect(html).not.toContain('api.example.test');
+  });
+});

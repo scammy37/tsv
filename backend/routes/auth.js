@@ -88,7 +88,7 @@ router.post('/forgot-password', validate(schemas.requestPasswordReset), asyncHan
 
   if (user) {
     const { token } = await passwordReset.issue(user.id);
-    const resetUrl = `${config.frontendUrl.split(',')[0]}/reset-password?token=${token}`;
+    const resetUrl = `${config.publicUrl}/reset-password?token=${token}`;
     emailService.notify('password_reset', user.email, {
       user,
       resetUrl,

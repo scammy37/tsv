@@ -28,7 +28,11 @@ export function AuthProvider({ children }) {
     }
     api.me()
       .then(setUser)
-      .catch(() => setToken(null))
+      // Only a 401 means the stored session is dead, and the client already
+      // clears the token for one. Anything else -- the backend still waking,
+      // a dropped connection -- says nothing about the session, and throwing
+      // it away would sign the resident out for the server being slow.
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

@@ -65,7 +65,7 @@ const escapeHtml = (value) => String(value ?? '')
   .replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;');
 
-const ticketUrl = (ticket) => `${config.frontendUrl}/tickets/${ticket.id}`;
+const ticketUrl = (ticket) => `${config.publicUrl}/tickets/${ticket.id}`;
 
 const layout = (heading, bodyHtml, ticket) => `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
