@@ -75,10 +75,27 @@ you never need more.
 
 ## Switch back to how it was
 
-1. **Static site** → **Settings** → **Custom Domains** → delete both domains.
-2. **Web service** → **Settings** → **Custom Domains** → add both back.
-3. **IONOS** → change the `www` CNAME back to `tsv-22a6.onrender.com`, and
-   the apex `A` record back if you changed it.
+1. **Static site** `tsv-site` → **Settings** → **Custom Domains** → **⋯** →
+   **Delete** on both domains.
+2. **Web service** `tsvnj` → **Settings** → **Custom Domains** → add both back.
+3. **IONOS** → change the `www` CNAME back to `tsv-22a6.onrender.com`.
+
+**What the DNS looks like now** (set up 2 October 2026), and before:
+
+| IONOS record | Now (static site) | Before (to switch back) |
+|---|---|---|
+| `www` CNAME | `tsv-site.onrender.com` | `tsv-22a6.onrender.com` |
+| `@` A | `216.24.57.1` | `216.24.57.1` (unchanged) |
+
+Email records (MX, `resend._domainkey`, `send`) were never touched and must
+not be. `townsquarevillagenj.com` is the main address, and `www` redirects
+to it.
+
+**If Delete is missing from the ⋯ menu**, the service is still controlled by
+a Render Blueprint. Dashboard → **Blueprints** → the Blueprint →
+**Disconnect** (this deletes nothing). Delete can take a few minutes to
+appear afterwards, so refresh. The Blueprint for this project was
+disconnected on 2 October 2026 for exactly this reason.
 
 That's everything. The web service never stopped serving the full site, so
 there is no code or deploy to undo. You can leave `FRONTEND_URL` as it is,
