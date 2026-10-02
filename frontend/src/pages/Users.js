@@ -22,8 +22,48 @@ const roleOptions = (role) => (ROLES.some((r) => r.value === role)
   ? ROLES
   : [...ROLES, { value: role, label: RETIRED_ROLE_LABELS[role] || role }]);
 
+/**
+ * A table cell value that is edited in place: type, then Enter (or click away)
+ * to save, Escape to put it back. The parent keys it on the saved value, so a
+ * successful save re-mounts it with the new value while a rejected one leaves
+ * what was typed on screen next to the error explaining it.
+ */
+function InlineEdit({
+  value, onSave, label, placeholder, disabled, type = 'text', allowEmpty = false,
+  same = (a, b) => a === b,
+}) {
+  const current = value ?? '';
+  return (
+    <input
+      type={type}
+      defaultValue={current}
+      aria-label={label}
+      placeholder={placeholder}
+      disabled={disabled}
+      title="Press Enter to save, Escape to cancel"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+        if (e.key === 'Escape') {
+          e.currentTarget.value = current;
+          e.currentTarget.blur();
+        }
+      }}
+      onBlur={(e) => {
+        const next = e.target.value.trim();
+        // Unchanged, or emptied where empty is not allowed: put it back
+        // rather than send something the API will refuse.
+        if (same(next, current) || (!next && !allowEmpty)) {
+          e.target.value = current;
+          return;
+        }
+        onSave(next);
+      }}
+    />
+  );
+}
+
 export default function Users() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, setUser } = useAuth();
 
   const [filters, setFilters] = useState({ q: '', role: '', includeInactive: false });
   const [users, setUsers] = useState([]);
@@ -74,6 +114,8 @@ export default function Users() {
     try {
       const updated = await api.updateUser(id, payload);
       setUsers((current) => current.map((u) => (u.id === id ? updated : u)));
+      // The header shows the signed-in manager's own name and address.
+      if (id === currentUser?.id) setUser(updated);
       setNotice(message);
     } catch (err) {
       setError(errorMessage(err, 'Could not update that account'));
@@ -216,7 +258,28 @@ export default function Users() {
                   return (
                     <tr key={u.id} style={u.isActive ? undefined : { opacity: 0.55 }}>
                       <td>
-                        {u.fullName}
+                        {/* First and last separately: splitting one box at a
+                            space gets "Mary Ann Smith" wrong. */}
+                        <div className="inline-name">
+                          <InlineEdit
+                            key={`f-${u.firstName}`}
+                            value={u.firstName}
+                            label={`First name of ${u.fullName}`}
+                            placeholder="First"
+                            disabled={busyId === u.id}
+                            onSave={(next) => patch(u.id, { firstName: next },
+                              `Renamed to ${next} ${u.lastName}`)}
+                          />
+                          <InlineEdit
+                            key={`l-${u.lastName}`}
+                            value={u.lastName}
+                            label={`Last name of ${u.fullName}`}
+                            placeholder="Last"
+                            disabled={busyId === u.id}
+                            onSave={(next) => patch(u.id, { lastName: next },
+                              `Renamed to ${u.firstName} ${next}`)}
+                          />
+                        </div>
                         {isSelf && <span style={{ color: 'var(--text-faint)' }}> (you)</span>}
                         {!u.isActive && <span className="badge badge-overdue" style={{ marginLeft: 8 }}>Deactivated</span>}
                         {u.mustChangePassword && (
@@ -227,34 +290,28 @@ export default function Users() {
                         )}
                       </td>
                       <td>
-                        {/* Editable in place like the role beside it. Keyed on
-                            the current address so a successful save re-mounts
-                            the input, while a rejected one leaves what was
-                            typed on screen next to the error explaining it. */}
-                        <input
+                        <InlineEdit
                           key={u.email}
                           type="email"
-                          defaultValue={u.email}
+                          value={u.email}
+                          label={`Email of ${u.fullName}`}
                           disabled={busyId === u.id}
-                          title="Press Enter to save, Escape to cancel"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') e.currentTarget.blur();
-                            if (e.key === 'Escape') {
-                              e.currentTarget.value = u.email;
-                              e.currentTarget.blur();
-                            }
-                          }}
-                          onBlur={(e) => {
-                            const next = e.target.value.trim();
-                            if (!next || next.toLowerCase() === u.email.toLowerCase()) {
-                              e.target.value = u.email;
-                              return;
-                            }
-                            patch(u.id, { email: next }, `${u.fullName} is now ${next}`);
-                          }}
+                          same={(a, b) => a.toLowerCase() === b.toLowerCase()}
+                          onSave={(next) => patch(u.id, { email: next }, `${u.fullName} is now ${next}`)}
                         />
                       </td>
-                      <td>{u.unitNumber || '--'}</td>
+                      <td>
+                        <InlineEdit
+                          key={`a-${u.unitNumber}`}
+                          value={u.unitNumber}
+                          label={`Address of ${u.fullName}`}
+                          placeholder="Add address"
+                          allowEmpty
+                          disabled={busyId === u.id}
+                          onSave={(next) => patch(u.id, { unitNumber: next },
+                            next ? `${u.fullName}'s address is now ${next}` : `Cleared ${u.fullName}'s address`)}
+                        />
+                      </td>
                       <td>
                         <select
                           value={u.role}

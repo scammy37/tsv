@@ -674,3 +674,7 @@ th.num { text-align: right; }
 .sortrow { display: flex; gap: 6px; align-items: stretch; }
 .sortrow select { flex: 1 1 auto; min-width: 0; }
 .sortdir { flex: 0 0 auto; padding: 0 12px; font-size: 15px; line-height: 1; }
+
+/* First and last name side by side in a People row. */
+.inline-name { display: flex; gap: 6px; }
+.inline-name input { min-width: 0; width: 100%; }

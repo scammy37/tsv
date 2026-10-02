@@ -384,3 +384,38 @@ describe('POST /api/users/:id/reset-password', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('PATCH /api/users/:id -- name and address from the People page', () => {
+  it('lets management correct a resident\'s name and address', async () => {
+    const res = await request(app).patch(`/api/users/${homeowner.id}`)
+      .set('Authorization', manager.auth())
+      .send({ firstName: 'Mary Ann', lastName: 'Smith', unitNumber: '61 Hickory Hill Ct.' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.user).toMatchObject({
+      firstName: 'Mary Ann', lastName: 'Smith', fullName: 'Mary Ann Smith', unitNumber: '61 Hickory Hill Ct.',
+    });
+  });
+
+  it('clears an address when it is emptied', async () => {
+    const res = await request(app).patch(`/api/users/${homeowner.id}`)
+      .set('Authorization', manager.auth()).send({ unitNumber: '' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.unitNumber).toBeNull();
+  });
+
+  it('refuses an empty name rather than saving a nameless account', async () => {
+    const res = await request(app).patch(`/api/users/${homeowner.id}`)
+      .set('Authorization', manager.auth()).send({ firstName: '' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('is still closed to homeowners', async () => {
+    const res = await request(app).patch(`/api/users/${homeowner.id}`)
+      .set('Authorization', homeowner.auth()).send({ firstName: 'Self-promoted' });
+
+    expect(res.status).toBe(403);
+  });
+});
