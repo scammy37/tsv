@@ -677,4 +677,16 @@ th.num { text-align: right; }
 
 /* First and last name side by side in a People row. */
 .inline-name { display: flex; gap: 6px; }
-.inline-name input { min-width: 0; width: 100%; }
+.inline-name input { min-width: 0; width: 78px; }
+/* Surnames run longer than first names. */
+.inline-name input + input { width: 96px; }
+
+/* Wide enough for "Homeowner" and "Management" in full. */
+.role-select { min-width: 138px; }
+/* Last column of a People row: keep "10 days ago" on one line. */
+td.joined { white-space: nowrap; color: var(--text-muted); }
+/* Email and address are the longest values in a People row. */
+.wide-field { min-width: 166px; }
+/* Every People cell is an input or a button with its own padding, so the
+   cells need less of their own to fit all eight columns. */
+.people-table th, .people-table td { padding-left: 6px; padding-right: 6px; }

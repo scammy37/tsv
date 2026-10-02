@@ -30,11 +30,12 @@ const roleOptions = (role) => (ROLES.some((r) => r.value === role)
  */
 function InlineEdit({
   value, onSave, label, placeholder, disabled, type = 'text', allowEmpty = false,
-  same = (a, b) => a === b,
+  same = (a, b) => a === b, className,
 }) {
   const current = value ?? '';
   return (
     <input
+      className={className}
       type={type}
       defaultValue={current}
       aria-label={label}
@@ -241,15 +242,15 @@ export default function Users() {
       ) : (
         <div className="card">
           <div className="table-wrap">
-            <table>
+            <table className="people-table">
               <thead>
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
                   <th>Address</th>
                   <th>Role</th>
-                  <th>Joined</th>
                   <th />
+                  <th>Joined</th>
                 </tr>
               </thead>
               <tbody>
@@ -292,6 +293,7 @@ export default function Users() {
                       <td>
                         <InlineEdit
                           key={u.email}
+                          className="wide-field"
                           type="email"
                           value={u.email}
                           label={`Email of ${u.fullName}`}
@@ -303,6 +305,7 @@ export default function Users() {
                       <td>
                         <InlineEdit
                           key={`a-${u.unitNumber}`}
+                          className="wide-field"
                           value={u.unitNumber}
                           label={`Address of ${u.fullName}`}
                           placeholder="Add address"
@@ -314,6 +317,7 @@ export default function Users() {
                       </td>
                       <td>
                         <select
+                          className="role-select"
                           value={u.role}
                           disabled={busyId === u.id || isSelf}
                           title={isSelf ? 'You cannot change your own role' : undefined}
@@ -323,7 +327,6 @@ export default function Users() {
                           {roleOptions(u.role).map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                         </select>
                       </td>
-                      <td>{formatRelative(u.createdAt)}</td>
                       <td>
                         {confirmingReset === u.id ? (
                           <div className="rowconfirm">
@@ -399,6 +402,7 @@ export default function Users() {
                           </div>
                         )}
                       </td>
+                      <td className="joined">{formatRelative(u.createdAt)}</td>
                     </tr>
                   );
                 })}

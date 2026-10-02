@@ -23,10 +23,10 @@ const OFFICE_PHONE = '973-328-4015';
 const OFFICE_PHONE_HREF = 'tel:+19733284015';
 
 const PORTAL_LINKS = [
-  { label: 'News & events', href: `${PORTAL}/communityfeed.php` },
-  { label: 'Documents & payments', href: `${PORTAL}/myhoaresources.php` },
+  { label: 'News & Events', href: `${PORTAL}/communityfeed.php` },
+  { label: 'Documents & Payments', href: `${PORTAL}/myhoaresources.php` },
   { label: 'Community Pages', href: `${PORTAL}/publichoa.php` },
-  { label: 'Resident portal', href: `${PORTAL}/home.php` },
+  { label: 'Resident Portal', href: `${PORTAL}/home.php` },
 ];
 
 /**
@@ -162,22 +162,22 @@ export default function Home() {
               <ul className="home-reslist">
                 <li>
                   <a href={`${PORTAL}/myhoaresources.php`} target="_blank" rel="noopener noreferrer">
-                    Documents &amp; governing rules
+                    Documents &amp; Governing Rules
                   </a>
                 </li>
                 <li>
                   <a href={`${PORTAL}/myhoaresources.php`} target="_blank" rel="noopener noreferrer">
-                    Make a payment
+                    Make a Payment
                   </a>
                 </li>
                 <li>
                   <a href={`${PORTAL}/communityfeed.php`} target="_blank" rel="noopener noreferrer">
-                    Board meetings &amp; news
+                    Board Meetings &amp; News
                   </a>
                 </li>
                 <li>
                   <a href={`${PORTAL}/communityfeed.php`} target="_blank" rel="noopener noreferrer">
-                    Calendar &amp; committees
+                    Calendar &amp; Committees
                   </a>
                 </li>
                 <li>
