@@ -27,6 +27,7 @@ const PORTAL_LINKS = [
   { label: 'Documents & Payments', href: `${PORTAL}/myhoaresources.php` },
   { label: 'Community Pages', href: `${PORTAL}/publichoa.php` },
   { label: 'Resident Portal', href: `${PORTAL}/home.php` },
+  { label: 'Resources', href: `${PORTAL}/myhoaresources.php` },
 ];
 
 /**
@@ -47,7 +48,7 @@ export default function Home() {
           <div className="home-links">
             {PORTAL_LINKS.map((link) => (
               <a
-                key={link.href}
+                key={link.label}
                 className="home-link-out"
                 href={link.href}
                 target="_blank"
