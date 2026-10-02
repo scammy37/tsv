@@ -25,7 +25,7 @@ const OFFICE_PHONE_HREF = 'tel:+19733284015';
 const PORTAL_LINKS = [
   { label: 'News & events', href: `${PORTAL}/communityfeed.php` },
   { label: 'Documents & payments', href: `${PORTAL}/myhoaresources.php` },
-  { label: 'Community pages', href: `${PORTAL}/publichoa.php` },
+  { label: 'Community Pages', href: `${PORTAL}/publichoa.php` },
   { label: 'Resident portal', href: `${PORTAL}/home.php` },
 ];
 
@@ -182,7 +182,7 @@ export default function Home() {
                 </li>
                 <li>
                   <a href={`${PORTAL}/publichoa.php`} target="_blank" rel="noopener noreferrer">
-                    Community pages
+                    Community Pages
                   </a>
                 </li>
               </ul>
