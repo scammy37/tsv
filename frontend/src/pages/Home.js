@@ -15,6 +15,15 @@ import HeroBanner from '../components/HeroBanner';
  */
 const PORTAL = 'https://engage.goenumerate.com/s/townsquarevillage';
 
+// The rules folder on the portal, by its document-group number. If Taylor
+// reorganises the portal's documents this number can change, and this link
+// is the one to check.
+const RULES = `${PORTAL}/dyndocuments.php?group=163541`;
+
+// Dues are paid through the association's account at Western Alliance Bank,
+// not on the Taylor portal.
+const PAYMENT = 'https://pay.westernalliancebank.com/Home?cmcid=299F47D9';
+
 // Most residents reach this page on a phone, so the number is a tel: link
 // everywhere it appears -- tappable rather than something to write down. Held
 // in one place so the office card, the emergency notice and the footer can
@@ -27,7 +36,7 @@ const PORTAL_LINKS = [
   { label: 'Documents & Payments', href: `${PORTAL}/myhoaresources.php` },
   { label: 'Community Pages', href: `${PORTAL}/publichoa.php` },
   { label: 'Resident Portal', href: `${PORTAL}/home.php` },
-  { label: 'Resources', href: `${PORTAL}/myhoaresources.php` },
+  { label: 'Rules & Regulations', href: RULES },
 ];
 
 /**
@@ -167,7 +176,7 @@ export default function Home() {
                   </a>
                 </li>
                 <li>
-                  <a href={`${PORTAL}/myhoaresources.php`} target="_blank" rel="noopener noreferrer">
+                  <a href={PAYMENT} target="_blank" rel="noopener noreferrer">
                     Make a Payment
                   </a>
                 </li>
@@ -188,7 +197,8 @@ export default function Home() {
                 </li>
               </ul>
               <p className="home-reslist-note">
-                Hosted on the association&rsquo;s resident portal, managed by Taylor Management.
+                Payments go to the association&rsquo;s account at Western Alliance Bank.
+                Everything else is on the resident portal, managed by Taylor Management.
               </p>
             </div>
 
