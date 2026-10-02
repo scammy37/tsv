@@ -176,6 +176,11 @@ export default function Home() {
                   </a>
                 </li>
                 <li>
+                  <a href={RULES} target="_blank" rel="noopener noreferrer">
+                    Rules &amp; Regulations
+                  </a>
+                </li>
+                <li>
                   <a href={PAYMENT} target="_blank" rel="noopener noreferrer">
                     Make a Payment
                   </a>
