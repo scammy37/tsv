@@ -24,8 +24,9 @@ Without a backup file the site comes back empty and you skip Part 3.
 ## Part 2: Connect the site to it (Render)
 
 1. On the new database, click **Connect** → **Internal** tab → copy the URL.
-2. Open the **web service** `tsv-22a6`, the backend. Not the database, and
-   not the static site if you set one up. → **Environment**.
+2. Open the **web service `tsvnj`** (address `tsv-22a6.onrender.com`), which
+   is the backend. Not the database, and not the static site `tsv-site`.
+   → **Environment**.
 3. Edit `DATABASE_URL` → paste the new URL → **Save Changes**.
 4. The site redeploys on its own, and the deploy creates all the tables. Wait
    for **Live**. If it doesn't start, use **Manual Deploy → Deploy latest
@@ -34,7 +35,8 @@ Without a backup file the site comes back empty and you skip Part 3.
    show `"status":"ok"`.
 
 Leave every other setting alone. They belong to the site, not the database,
-so they survived.
+so they survived. The static site `tsv-site`, which serves the homepage,
+needs nothing at all during a restore.
 
 ## Part 3: Load your backup file (GitHub Codespace)
 
@@ -72,7 +74,7 @@ passwords and tickets are back.
 
 The site starts empty. Creating the first manager needs an invite code:
 
-1. Web service → **Environment** → add `STAFF_INVITE_CODE` with any long
+1. Web service `tsvnj` → **Environment** → add `STAFF_INVITE_CODE` with any long
    random value → **Save**. Wait for the redeploy.
 2. On the site: **Create an account** → role **Management** → enter the code.
 3. Back in **Environment**, **delete** `STAFF_INVITE_CODE`. While it is set,
