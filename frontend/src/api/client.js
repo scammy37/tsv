@@ -70,6 +70,7 @@ export const errorMessage = (error, fallback = 'Something went wrong') => {
 export const api = {
   login: (credentials) => client.post('/auth/login', credentials).then((r) => r.data),
   register: (payload) => client.post('/auth/register', payload).then((r) => r.data),
+  signupToken: () => client.get('/auth/signup-token').then((r) => r.data.token),
   me: () => client.get('/auth/me').then((r) => r.data.user),
   // Returns the whole body, not just the user: a changed email address comes
   // back with a replacement token.

@@ -12,8 +12,17 @@ const { publicUser } = require('../utils/serialize');
 const { ROLES } = require('../constants');
 const emailService = require('../services/email');
 const passwordReset = require('../services/passwordReset');
+const signupGuard = require('../services/signupGuard');
 
 const router = express.Router();
+
+/**
+ * GET /api/auth/signup-token
+ * The ticket the sign-up page picks up when it loads; see signupGuard.
+ */
+router.get('/signup-token', (req, res) => {
+  res.json({ token: signupGuard.issueTicket() });
+});
 
 /**
  * POST /api/auth/register
@@ -22,6 +31,17 @@ const router = express.Router();
  */
 router.post('/register', validate(schemas.register), asyncHandler(async (req, res) => {
   const { email, password, firstName, lastName, unitNumber, phone, role, staffInviteCode } = req.body;
+
+  // Before anything else, so an automated sign-up costs no database work and
+  // never reaches the new-account alert.
+  const blocked = signupGuard.reasonToBlock(req.body);
+  if (blocked) {
+    console.warn(`Signup blocked (${blocked}) from ${req.ip}`);
+    throw AppError.badRequest(
+      'We could not complete your sign-up. Please wait a moment and try again, '
+      + 'or call the office at 973-328-4015.',
+    );
+  }
 
   if (role !== ROLES.HOMEOWNER) {
     if (!config.staffInviteCode) {

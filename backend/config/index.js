@@ -96,6 +96,12 @@ const config = {
     adminNotify: process.env.ADMIN_NOTIFY_EMAIL || '',
   },
 
+  // The invisible bot checks on sign-up (services/signupGuard.js). On
+  // everywhere but the test suite, whose hundreds of direct sign-ups would
+  // otherwise each need a ticket and a three-second wait; the guard's own
+  // tests switch it back on. SIGNUP_GUARD=off disables it in an emergency.
+  signupGuard: env !== 'test' && process.env.SIGNUP_GUARD !== 'off',
+
   bcryptRounds: int(process.env.BCRYPT_ROUNDS, env === 'test' ? 4 : 10),
 
   // When true the API also serves frontend/build, so the whole app runs on one

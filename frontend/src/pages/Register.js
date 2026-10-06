@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 
-import { errorMessage } from '../api/client';
+import { api, errorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Alert from '../components/Alert';
 import Spinner from '../components/Spinner';
@@ -26,6 +26,16 @@ export default function Register() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Bot checks; see backend/services/signupGuard.js. When the form appeared,
+  // the off-screen field people never see, and the ticket the server hands
+  // out with the page. A resident never notices any of them.
+  const startedAt = useRef(Date.now());
+  const honeypot = useRef(null);
+  const ticket = useRef(null);
+  useEffect(() => {
+    ticket.current = api.signupToken().catch(() => null);
+  }, []);
+
   if (authLoading) return <Spinner center />;
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -41,6 +51,10 @@ export default function Register() {
       const payload = { ...form };
       if (!isStaffSignup) delete payload.staffInviteCode;
       else delete payload.unitNumber;
+
+      payload.website = honeypot.current?.value || '';
+      payload.formToken = (await ticket.current) || '';
+      payload.elapsedMs = Date.now() - startedAt.current;
 
       await register(payload);
       navigate('/dashboard', { replace: true });
@@ -60,6 +74,13 @@ export default function Register() {
         <Alert>{error}</Alert>
 
         <form onSubmit={handleSubmit}>
+          {/* Off-screen, not display:none -- some bots skip inputs that are
+              hidden outright. Out of the tab order and hidden from screen
+              readers, so no person can land in it. */}
+          <div className="hp-field" aria-hidden="true">
+            <label htmlFor="website">Leave this empty</label>
+            <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" ref={honeypot} />
+          </div>
           <div className="field-row">
             <div className="field">
               <label htmlFor="firstName">First name</label>

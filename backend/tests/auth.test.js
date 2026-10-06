@@ -316,3 +316,86 @@ describe('new-account notice', () => {
     expect(rows.map((r) => r.recipient_email)).toEqual([manager.email]);
   });
 });
+
+describe('sign-up bot checks', () => {
+  const config = require('../config');
+  const signupGuard = require('../services/signupGuard');
+  const emailService = require('../services/email');
+
+  beforeEach(() => { config.signupGuard = true; });
+  afterEach(() => { config.signupGuard = false; });
+
+  // What the real page sends: a ticket it fetched on load, an empty hidden
+  // field, and how long the form was open.
+  const human = async (overrides = {}) => {
+    const { body } = await request(app).get('/api/auth/signup-token');
+    return {
+      email: uniqueEmail('resident'),
+      password: 'Password123!',
+      firstName: 'Nina',
+      lastName: 'Okafor',
+      unitNumber: '12 Pondview Terrace',
+      website: '',
+      formToken: body.token,
+      elapsedMs: 25000,
+      ...overrides,
+    };
+  };
+
+  const register = (payload) => request(app).post('/api/auth/register').send(payload);
+  const accountExists = async (address) => (
+    (await db.query('SELECT 1 FROM users WHERE email = $1', [address])).rowCount > 0
+  );
+
+  it('lets a person through', async () => {
+    const payload = await human();
+    const res = await register(payload);
+    expect(res.status).toBe(201);
+    expect(await accountExists(payload.email)).toBe(true);
+  });
+
+  it('turns away a bot that fills the hidden field', async () => {
+    const payload = await human({ website: 'http://spam.example' });
+    const res = await register(payload);
+    expect(res.status).toBe(400);
+    expect(await accountExists(payload.email)).toBe(false);
+  });
+
+  it('turns away a bot that submits faster than anyone can type', async () => {
+    const payload = await human({ elapsedMs: 600 });
+    expect((await register(payload)).status).toBe(400);
+    expect(await accountExists(payload.email)).toBe(false);
+  });
+
+  it('turns away a bot that posts to the API without loading the page', async () => {
+    const payload = await human();
+    delete payload.formToken;
+    delete payload.elapsedMs;
+    delete payload.website;
+    expect((await register(payload)).status).toBe(400);
+    expect(await accountExists(payload.email)).toBe(false);
+  });
+
+  it('turns away a forged or stale ticket', async () => {
+    const forged = await human({ formToken: `${Date.now()}.not-a-real-signature` });
+    expect((await register(forged)).status).toBe(400);
+
+    const sevenHoursAgo = Date.now() - 7 * 60 * 60 * 1000;
+    const stale = await human({ formToken: signupGuard.issueTicket(sevenHoursAgo) });
+    expect((await register(stale)).status).toBe(400);
+  });
+
+  it('never tells the visitor which check failed', async () => {
+    const res = await register(await human({ website: 'x' }));
+    expect(res.body.error).not.toMatch(/hidden|honeypot|ticket|token|fast|ms/i);
+  });
+
+  it('sends no new-account alert for a blocked sign-up', async () => {
+    await emailService.flush();
+    await db.query('DELETE FROM email_logs');
+    await register(await human({ website: 'x' }));
+    await emailService.flush();
+    const { rows } = await db.query("SELECT 1 FROM email_logs WHERE template = 'user_registered'");
+    expect(rows).toHaveLength(0);
+  });
+});

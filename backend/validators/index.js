@@ -22,6 +22,10 @@ const register = Joi.object({
   role: Joi.string().valid(...Object.values(ROLES)).default(ROLES.HOMEOWNER),
   // Required by the route (not here) when role is staff or management.
   staffInviteCode: Joi.string().allow('').optional(),
+  // Bot checks, read by services/signupGuard.js and never stored.
+  website: Joi.string().allow('').max(500),
+  formToken: Joi.string().allow('').max(200),
+  elapsedMs: Joi.number().integer().min(0),
 });
 
 const login = Joi.object({

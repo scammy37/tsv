@@ -690,3 +690,6 @@ td.joined { white-space: nowrap; color: var(--text-muted); }
 /* Every People cell is an input or a button with its own padding, so the
    cells need less of their own to fit all eight columns. */
 .people-table th, .people-table td { padding-left: 6px; padding-right: 6px; }
+
+/* Sign-up honeypot: in the page for bots, off-screen for people. */
+.hp-field { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }

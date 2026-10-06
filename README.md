@@ -71,6 +71,10 @@ run by Taylor Management. One obvious call to action — submit a request.
 - Ticket **age** with a 7-day attention threshold, published through
   `GET /api/meta` so a badge and a report can never disagree about it
 - Append-only activity log on every ticket
+- Invisible bot checks on sign-up -- a hidden trap field, a minimum fill time
+  and a signed form ticket -- with no CAPTCHA for residents to solve. Blocked
+  attempts are logged as `Signup blocked (reason)`; `SIGNUP_GUARD=off`
+  disables them in an emergency
 - Self-service password reset, with single-use hashed tokens that expire in an
   hour
 - Management-issued temporary passwords for residents who are locked out,
