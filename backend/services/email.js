@@ -214,6 +214,22 @@ const templates = {
         People page. A deactivated account is signed out immediately.</p>`),
   }),
 
+  database_backup: ({ tag, filename, counts, file }) => ({
+    // Same wording as the earlier backup emails, so one search finds them all.
+    subject: `Backup of ${config.appName} — ${filename} ${tag}`,
+    html: layout('Your database backup', `
+      <p>Attached is a complete copy of the Townsquare Village database, as it was
+         when this was sent.</p>
+      <table style="border-collapse:collapse;font-size:14px">
+        ${Object.entries(counts).map(([table, n]) => infoRow(table, String(n))).join('')}
+      </table>
+      <p style="margin:20px 0 0;font-size:13px;color:#67707f">
+        Keep this where you would keep resident records: it holds names,
+        addresses, phone numbers and password hashes. To load it into a new
+        database, follow RESTORE.md in the GitHub repository.</p>`),
+    attachments: [{ filename, content: file }],
+  }),
+
   ticket_comment: ({ ticket, comment, author }) => ({
     subject: `[${ticket.ticket_number}] New comment on ${ticket.title}`,
     html: layout('New comment on your ticket', `
@@ -268,7 +284,13 @@ const send = async (templateName, to, context = {}) => {
       return { status: 'skipped', subject };
     }
 
-    await mailer.sendMail({ from: config.mail.from, to, subject, html: rendered.html });
+    await mailer.sendMail({
+      from: config.mail.from,
+      to,
+      subject,
+      html: rendered.html,
+      ...(rendered.attachments ? { attachments: rendered.attachments } : {}),
+    });
     await logEmail({ ticketId: ticket?.id, to, subject, template: templateName, status: 'sent' });
     return { status: 'sent', subject };
   } catch (err) {

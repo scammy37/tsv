@@ -74,7 +74,7 @@ const request = async (path, { method = 'GET', apiKey, body, apiBase = API } = {
 const createMailer = ({ apiKey, apiBase = API }) => ({
   kind: 'resend',
 
-  async sendMail({ from, to, subject, html, text }) {
+  async sendMail({ from, to, subject, html, text, attachments }) {
     const result = await request('/emails', {
       method: 'POST',
       apiKey,
@@ -87,6 +87,13 @@ const createMailer = ({ apiKey, apiBase = API }) => ({
         subject,
         ...(html ? { html } : {}),
         ...(text ? { text } : {}),
+        // Callers pass a Buffer, as nodemailer takes it; Resend wants base64.
+        ...(attachments?.length ? {
+          attachments: attachments.map((a) => ({
+            filename: a.filename,
+            content: Buffer.from(a.content).toString('base64'),
+          })),
+        } : {}),
       },
     });
     // Named to match nodemailer's result, which email.js does not read but

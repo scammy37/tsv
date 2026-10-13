@@ -5,10 +5,16 @@ Render deletes a free database 30 days after it is created. The current one,
 the settings are safe; only the data is lost. This page puts it all back.
 
 **Takes about 15 minutes. You need:** your Render login, your GitHub login,
-and your backup file. That's the `.json` attached to the email
-**"Backup of Townsquare Village HOA — tsv-2026-09-29_02-58-43.json"**
-(starred in the Gmail inbox). Download the attachment before you start.
-Without a backup file the site comes back empty and you skip Part 3.
+and your backup file: the `.json` attached to the **newest** email titled
+**"Backup of Townsquare Village HOA — tsv-…"**. Search Gmail for
+`"Backup of Townsquare Village HOA"` and take the most recent; the date is in
+the file name. Download the attachment before you start. Without a backup
+file the site comes back empty and you skip Part 3.
+
+**To get a fresh backup** while the database is still running: ask for one,
+and the date in `BACKUP_REQUEST` in `backend/server.js` is changed and pushed.
+The next deploy emails a new backup to `ADMIN_NOTIFY_EMAIL`, once. The
+database must not have expired yet.
 
 ---
 

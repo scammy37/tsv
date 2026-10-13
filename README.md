@@ -182,6 +182,11 @@ The current database, `tsv-db`, expires on **17 October 2026**.
 
 ### Before it expires: save a backup file
 
+**The easy way:** the server emails a backup to `ADMIN_NOTIFY_EMAIL` when it
+starts, once per request date in `BACKUP_REQUEST` (`backend/server.js`).
+Changing that date and pushing sends a fresh one. The Codespace steps below
+do the same thing by hand.
+
 This gives you the one file you need to restore everything later. It only
 works **before 17 October**. An expired database cannot be read from.
 
