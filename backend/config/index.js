@@ -175,6 +175,16 @@ const parseFrontendUrl = (raw) => String(raw || '')
   .filter(Boolean);
 
 config.frontendOrigins = parseFrontendUrl(config.frontendUrl);
+
+/**
+ * The Android app (Capacitor) serves its own copy of the pages from
+ * https://localhost inside the phone, so its API calls arrive from that
+ * origin. Sign-in is a bearer token, never a cookie, so allowing it lets no
+ * other page act on a resident's behalf.
+ */
+const NATIVE_APP_ORIGINS = ['https://localhost', 'capacitor://localhost'];
+config.corsOrigins = [...config.frontendOrigins, ...NATIVE_APP_ORIGINS];
+
 config.publicUrl = config.frontendOrigins[0] || 'http://localhost:3000';
 config.parseFrontendUrl = parseFrontendUrl;
 

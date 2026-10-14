@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
 import HeroBanner from '../components/HeroBanner';
+import InstallAppCard from '../components/InstallAppCard';
 
 /**
  * The association's existing resident portal, run by Taylor Management on
@@ -150,6 +151,8 @@ export default function Home() {
           </section>
 
           <aside className="home-aside">
+            <InstallAppCard />
+
             <div className="home-card">
               <h3>Association office</h3>
               <p className="home-card-strong">Townsquare Village HOA, Inc.</p>

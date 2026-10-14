@@ -1,0 +1,11 @@
+{
+  "appId": "com.townsquarevillagenj.app",
+  "appName": "Townsquare Village",
+  "webDir": "build",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
