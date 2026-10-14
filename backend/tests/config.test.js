@@ -72,18 +72,3 @@ describe('emailed links with several origins configured', () => {
     expect(html).not.toContain('api.example.test');
   });
 });
-
-describe('CORS for the Android app', () => {
-  const request = require('supertest');
-  const app = require('../app');
-
-  it('allows the origin the Capacitor app serves its pages from', async () => {
-    const res = await request(app).get('/api/health').set('Origin', 'https://localhost');
-    expect(res.headers['access-control-allow-origin']).toBe('https://localhost');
-  });
-
-  it('still refuses an origin nobody configured', async () => {
-    const res = await request(app).get('/api/health').set('Origin', 'https://evil.example');
-    expect(res.headers['access-control-allow-origin']).toBeUndefined();
-  });
-});

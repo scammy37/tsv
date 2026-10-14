@@ -16,7 +16,6 @@ homepage copy.
 
 ```
 /frontend          React app: public homepage, resident portal, staff portal
-/frontend/android  The same app packaged for Android (Capacitor)
 /backend           Express API, PostgreSQL schema and migrations
 /docs              Setup and deployment walkthroughs
 ```
@@ -85,14 +84,12 @@ run by Taylor Management. One obvious call to action — submit a request.
   invalidates its existing sessions immediately
 - Every notification recorded in `email_logs`, sent or not
 
-### On phones
+### As an app
 
-- Installable as an app from the website: "Install the app" on the homepage,
-  or **Add to Home screen** in Chrome or Safari. It opens full-screen, from its
-  own icon, and keeps itself up to date
-- A Capacitor Android project in `frontend/android`, built into an APK by
-  GitHub Actions, ready for the Play Store when wanted.
-  See **[docs/ANDROID.md](docs/ANDROID.md)**
+- Installable from the website on phones and computers: "Install the app" on
+  the homepage, or **Add to Home screen** in Chrome or Safari. It opens in its
+  own window from its own icon, and keeps itself up to date.
+  See **[docs/APP.md](docs/APP.md)**
 
 ## Try it without installing anything
 

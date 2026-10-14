@@ -4,14 +4,8 @@
  * "Install the app" button at a moment of its choosing.
  */
 
-// True inside the Capacitor-built Android app, which is already installed and
-// serves its files from the APK -- a service worker there would only get in
-// the way of updates shipped with a new APK.
-export const isNativeApp = () => Boolean(window.Capacitor?.isNativePlatform?.());
-
 // True when the site was opened from its home-screen icon.
-export const isInstalled = () => isNativeApp()
-  || window.matchMedia?.('(display-mode: standalone)').matches
+export const isInstalled = () => window.matchMedia?.('(display-mode: standalone)').matches
   || window.navigator.standalone === true;
 
 let deferredPrompt = null;
@@ -37,8 +31,6 @@ export const promptInstall = async () => {
 };
 
 export function registerPwa() {
-  if (isNativeApp()) return;
-
   window.addEventListener('beforeinstallprompt', (event) => {
     // Hold the prompt for our own button instead of Chrome's mini-infobar.
     event.preventDefault();
