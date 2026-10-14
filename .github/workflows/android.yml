@@ -1,7 +1,12 @@
 name: Android app
 
 # Builds the Android APK from the frontend, so nobody needs Android Studio to
-# get one. Download it from the run's "Artifacts" section. See docs/ANDROID.md.
+# get one. Every run attaches it to the run's "Artifacts" section.
+#
+# Running this workflow by hand (Actions -> Android app -> Run workflow) also
+# publishes the APK as a GitHub Release, which is the public download link:
+#   https://github.com/scammy37/tsv/releases/latest/download/townsquare-village.apk
+# See docs/ANDROID.md.
 on:
   push:
     branches: [main]
@@ -11,13 +16,21 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: android-${{ github.ref }}
+  group: android-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
   apk:
     name: Build APK
     runs-on: ubuntu-latest
+
+    # Creating a release needs write access to the repository's contents.
+    permissions:
+      contents: write
+
+    # Step conditions cannot read secrets directly, only this.
+    env:
+      HAS_SIGNING_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -36,11 +49,55 @@ jobs:
           java-version: '21'
           cache: gradle
 
+      # Optional: the association's own signing key, so each new release
+      # installs as an update. Without it build.gradle falls back to the debug
+      # key. Secrets are not available to pull requests from forks; the
+      # fallback covers those too.
+      - name: Load signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        if: env.HAS_SIGNING_KEY == 'true'
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
       - name: Build
-        run: bash scripts/build-android.sh debug
+        run: |
+          bash scripts/build-android.sh release
+          cp frontend/android/app/build/outputs/apk/release/app-release.apk townsquare-village.apk
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: townsquare-village-apk
-          path: frontend/android/app/build/outputs/apk/debug/*.apk
+          path: townsquare-village.apk
           if-no-files-found: error
+
+      - name: Publish release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: 1.${{ github.run_number }}
+        run: |
+          cat > notes.md <<'NOTES'
+          The Townsquare Village HOA app for Android phones: submit and follow
+          maintenance requests and rules violations.
+
+          **Most residents do not need this file.** The simplest way to get the
+          app is to open https://townsquarevillagenj.com in Chrome and tap
+          **Install the app**. That version updates itself.
+
+          To install this APK instead:
+          1. On the phone, download `townsquare-village.apk` below.
+          2. Open it. If Android asks, allow your browser to **install unknown apps**.
+          3. Tap **Install**.
+          NOTES
+          gh release create "android-v$VERSION" townsquare-village.apk \
+            --target "$GITHUB_SHA" \
+            --title "Townsquare Village app $VERSION" \
+            --notes-file notes.md \
+            --latest

@@ -56,19 +56,52 @@ notifications or photos from the camera, does not mean starting over.
 
 ### Getting an APK
 
-Every push to `main` that changes the frontend builds one automatically:
-GitHub → **Actions** → **Android app** → the latest run → **Artifacts** →
-`townsquare-village-apk`. You can also start a run by hand there with
-**Run workflow**.
+**Public download link** (always the newest published version):
+<https://github.com/scammy37/tsv/releases/latest/download/townsquare-village.apk>
 
-That APK is a *debug* build: it installs on any Android phone that allows
-"Install unknown apps", which makes it good for trying out, but it is not the
-signed file the Play Store accepts.
+A new version is published only when someone asks for one: GitHub →
+**Actions** → **Android app** → **Run workflow**. That builds the app from
+`main` and creates a release named *Townsquare Village app 1.N*. All of them
+are listed under the repository's **Releases**.
+
+Every push to `main` that changes the frontend also builds an APK, as a check
+that the app still builds. That copy is not published; it is attached to the
+run under **Artifacts** (sign-in required, kept 90 days).
+
+To install the APK, a resident downloads it on their phone, opens it, and
+allows their browser to "install unknown apps" when Android asks.
+
+### Signing, and why updates may need an uninstall
+
+Android only installs a new version over an old one if both are signed with
+the same key. Until the association has its own key, published APKs are
+signed with a throwaway debug key that changes from build to build, so
+**installing a newer release means uninstalling the old one first**. To fix
+that for good, create an upload key once and add it as four repository
+secrets (GitHub → Settings → Secrets and variables → Actions):
+
+```bash
+keytool -genkeypair -v -keystore upload.jks -alias upload \
+  -keyalg RSA -keysize 2048 -validity 10000
+base64 -w0 upload.jks     # the value for ANDROID_KEYSTORE_BASE64
+```
+
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | the base64 text above |
+| `ANDROID_KEYSTORE_PASSWORD` | the keystore password you chose |
+| `ANDROID_KEY_ALIAS` | `upload` |
+| `ANDROID_KEY_PASSWORD` | the key password you chose |
+
+Keep `upload.jks` and its passwords somewhere safe outside this repository:
+losing them means residents must reinstall, and the same key is what the Play
+Store will ask for. The workflow uses it automatically once the secrets exist.
 
 To build on your own computer instead (needs JDK 21 and Android Studio):
 
 ```bash
 bash scripts/build-android.sh          # debug APK
+bash scripts/build-android.sh release  # release APK
 ```
 
 or open `frontend/android` in Android Studio after running
