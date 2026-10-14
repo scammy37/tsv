@@ -27,8 +27,8 @@ export default function InstallAppCard() {
     <div className="home-card">
       <h3>Get the app</h3>
       <p>
-        Put Townsquare Village on your home screen to submit and follow requests
-        in one tap.
+        Install Townsquare Village on your phone or computer to submit and follow
+        requests in one tap.
       </p>
       {canPrompt ? (
         <button type="button" className="home-btn home-btn-primary" onClick={install}>
@@ -38,7 +38,7 @@ export default function InstallAppCard() {
         <p className="home-install-howto">
           {isIos()
             ? <>In Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.</>
-            : <>In Chrome, open the <strong>&#8942;</strong> menu and tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</>}
+            : <>In Chrome, open the <strong>&#8942;</strong> menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</>}
         </p>
       )}
     </div>
