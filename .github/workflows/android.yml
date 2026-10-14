@@ -1,0 +1,46 @@
+name: Android app
+
+# Builds the Android APK from the frontend, so nobody needs Android Studio to
+# get one. Download it from the run's "Artifacts" section. See docs/ANDROID.md.
+on:
+  push:
+    branches: [main]
+    paths: ['frontend/**', 'scripts/build-android.sh', '.github/workflows/android.yml']
+  pull_request:
+    paths: ['frontend/**', 'scripts/build-android.sh', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Capacitor 7's Android project needs JDK 21. The runner already has
+      # the Android SDK, at ANDROID_HOME.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Build
+        run: bash scripts/build-android.sh debug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: townsquare-village-apk
+          path: frontend/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
