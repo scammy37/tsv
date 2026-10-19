@@ -116,6 +116,12 @@ const emailBackupOnce = async (requestId) => {
   );
   if (rowCount) return { status: 'already-sent' };
 
+  // A database just created for a restore has no accounts yet. A "backup" of
+  // it is empty, arrives looking like any other, and as the newest one would
+  // be the file RESTORE.md tells you to use. This happened on 18 October.
+  const { rows: [{ n }] } = await db.query('SELECT count(*)::int AS n FROM users');
+  if (n === 0) return { status: 'empty' };
+
   const payload = await exportDatabase();
   const filename = filenameFor(payload);
   const result = await email.send('database_backup', to, {

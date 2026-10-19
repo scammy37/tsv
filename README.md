@@ -175,7 +175,9 @@ database **30 days after it is created**. After that there is a 14-day grace
 period where only upgrading to a paid plan gets it back. Then the database and
 everything in it is gone.
 
-The current database, `tsv-db`, expires on **17 October 2026**.
+The current database, `tsv-db-2`, expires on **17 November 2026**. (The
+first one, `tsv-db`, expired on 17 October and was restored into `tsv-db-2`
+on 18 October using exactly the steps in [RESTORE.md](RESTORE.md).)
 
 ### What survives and what does not
 
@@ -195,12 +197,13 @@ Changing that date and pushing sends a fresh one. The Codespace steps below
 do the same thing by hand.
 
 This gives you the one file you need to restore everything later. It only
-works **before 17 October**. An expired database cannot be read from.
+works **before the database expires** (17 November for `tsv-db-2`). An
+expired database cannot be read from.
 
 Nothing needs installing. It runs in a GitHub Codespace, which is a free
 computer in your browser that already has this project on it.
 
-1. **Get the database address.** In Render, open the database `tsv-db` →
+1. **Get the database address.** In Render, open the database `tsv-db-2` →
    **Connect** → **External** tab → copy the URL. It contains the database
    password, so paste it only where these steps say.
 2. **Open a Codespace.** On this repository's GitHub page: **Code →

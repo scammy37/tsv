@@ -39,6 +39,13 @@ const backups = () => sent.filter((m) => /^Backup of /.test(m.subject));
 const attached = (m) => JSON.parse(Buffer.from(m.attachments[0].content, 'base64').toString());
 
 describe('emailBackupOnce', () => {
+  // A database with someone in it; an empty one is never backed up (below).
+  beforeEach(async () => {
+    await createUser({ role: 'management' });
+    await email.flush();
+    sent.length = 0;
+  });
+
   it('emails the whole database, as a file a restore can read', async () => {
     const homeowner = await createUser();
     const ticket = await createTicket(homeowner);
@@ -84,6 +91,16 @@ describe('emailBackupOnce', () => {
     config.mail.adminNotify = '';
     expect((await backup.emailBackupOnce('2026-10-13')).status).toBe('skipped');
     config.mail.adminNotify = 'owner@example.test';
+    expect(backups()).toHaveLength(0);
+  });
+});
+
+describe('emailBackupOnce on an empty database', () => {
+  it('sends nothing, so an empty file never becomes the newest backup', async () => {
+    // resetDatabase leaves no accounts -- a database just created for a
+    // restore, before the backup has been loaded into it.
+    const result = await backup.emailBackupOnce('2026-10-13');
+    expect(result.status).toBe('empty');
     expect(backups()).toHaveLength(0);
   });
 });
