@@ -12,7 +12,7 @@
  *
  * Bump VERSION to force every installed copy to drop its cache.
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `tsv-shell-${VERSION}`;
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg', '/icons/icon-192.png'];
 

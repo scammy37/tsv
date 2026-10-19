@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -28,6 +28,26 @@ function Dashboard() {
   return isStaff ? <ManagementDashboard /> : <HomeownerDashboard />;
 }
 
+/**
+ * The installed app used to open straight to /dashboard?source=app. That page
+ * needs the backend, so after a quiet spell the app showed a spinner or the
+ * sign-in form for up to a minute and nothing else. It now opens to the
+ * homepage, which needs nothing from the backend and starts waking it.
+ *
+ * A phone that installed the app before the change keeps the old start
+ * address until it next refreshes the manifest -- for good, on an iPhone. So
+ * an app launch arriving at the old address is sent to the homepage here,
+ * and nobody has to reinstall. Everything else reaching /dashboard, including
+ * the "My requests" shortcut (?source=shortcut), is untouched.
+ */
+function DashboardEntry() {
+  const { search } = useLocation();
+  if (new URLSearchParams(search).get('source') === 'app') {
+    return <Navigate to="/?source=app" replace />;
+  }
+  return <ProtectedRoute><Dashboard /></ProtectedRoute>;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -43,7 +63,7 @@ export default function App() {
               needs to find out who the association is and how to file a request. */}
           <Route path="/" element={<Home />} />
 
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<DashboardEntry />} />
           <Route path="/tickets" element={<Navigate to="/dashboard" replace />} />
           <Route path="/tickets/new" element={<ProtectedRoute><NewTicket /></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />

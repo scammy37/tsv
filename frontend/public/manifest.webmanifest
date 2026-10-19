@@ -3,7 +3,7 @@
   "short_name": "Townsquare",
   "description": "Submit and track maintenance requests and rules violations with Townsquare Village HOA management.",
   "id": "/",
-  "start_url": "/dashboard?source=app",
+  "start_url": "/?source=app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -16,7 +16,7 @@
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "New request", "url": "/tickets/new?source=app", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "My requests", "url": "/dashboard?source=app", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "New request", "url": "/tickets/new?source=shortcut", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "My requests", "url": "/dashboard?source=shortcut", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

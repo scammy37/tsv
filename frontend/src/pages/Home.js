@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import { getToken } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import HeroBanner from '../components/HeroBanner';
 import InstallAppCard from '../components/InstallAppCard';
@@ -49,7 +50,12 @@ const PORTAL_LINKS = [
  * any width and sits at its own size instead of being stretched to fill.
  */
 export default function Home() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  // Someone with a saved sign-in is treated as signed in while the backend
+  // confirms it. Waiting for the answer showed a signed-in resident "Sign
+  // in" for up to a minute after a quiet spell, which reads as being logged
+  // out. If the saved sign-in turns out to be dead, the buttons switch back.
+  const signedIn = Boolean(user) || (loading && Boolean(getToken()));
 
   return (
     <div className="home">
@@ -71,7 +77,7 @@ export default function Home() {
           </div>
 
           <div className="home-actions">
-            {user ? (
+            {signedIn ? (
               <Link to="/dashboard" className="home-btn home-btn-primary">My requests</Link>
             ) : (
               <>
@@ -111,7 +117,7 @@ export default function Home() {
               {/* Filing a request needs an account, so a signed-out visitor is
                   offered the two ways to have one rather than a button leading
                   somewhere they cannot yet go. */}
-              {user ? (
+              {signedIn ? (
                 <div className="home-cta-actions">
                   <Link to="/tickets/new" className="home-btn home-btn-primary home-btn-lg">
                     Submit a request
