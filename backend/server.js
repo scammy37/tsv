@@ -5,7 +5,7 @@ const email = require('./services/email');
 const backup = require('./services/backup');
 
 // The most recent backup requested by email. See RESTORE.md.
-const BACKUP_REQUEST = '2026-10-13';
+const BACKUP_REQUEST = '2026-11-10';
 
 const server = app.listen(config.port, () => {
   console.log(`${config.appName} API listening on port ${config.port} (${config.env})`);
