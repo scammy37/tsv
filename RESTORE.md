@@ -1,7 +1,7 @@
 # Restoring the site after the database expires
 
 Render deletes a free database 30 days after it is created. The current one,
-`tsv-db-2`, expires on **17 November 2026**. The code, the table layout and
+`tsv-db-3`, expires on **19 December 2026**. The code, the table layout and
 the settings are safe; only the data is lost. This page puts it all back.
 
 **Takes about 15 minutes. You need:** your Render login, your GitHub login,
@@ -21,7 +21,7 @@ database must not have expired yet.
 ## Part 1: Create a new database (Render)
 
 1. Render dashboard → **New** → **Postgres**.
-2. Give it any name, for example `tsv-db-3`. Choose the **Free** plan (or the
+2. Give it any name, for example `tsv-db-4`. Choose the **Free** plan (or the
    paid one so it never expires again) → **Create Database**.
    - If Render refuses a second free database, delete the old expired
      one first. Render allows one free database at a time.
@@ -48,28 +48,34 @@ needs nothing at all during a restore.
 
 Skip this part if you have no backup file.
 
-1. On the new database in Render: **Connect** → **External** tab → copy the
+1. On the new database in Render: **Info** → **Access Control** → **Add
+   source** → `0.0.0.0/0`, description `everywhere` → **Save**. A new
+   database may start with outside connections blocked, and the restore then
+   cannot connect.
+2. Still on the new database: **Connect** → **External** tab → copy the
    URL. (External this time, because the Codespace is outside Render.)
-2. On the GitHub repository page: green **Code** button → **Codespaces** tab
-   → **Create codespace on main**. Wait 2–3 minutes until the terminal at the
-   bottom is ready.
-3. In the file list on the left, right-click → **New Folder** → name it
+3. Open **https://codespaces.new/scammy37/tsv** → **Create codespace**.
+   Wait 2–3 minutes until the terminal at the bottom is ready.
+4. In the file list on the left, right-click → **New Folder** → name it
    `backups`, all lower case (the Codespace treats `Backups` as a different
    folder). Drag your `.json` backup file from your computer into it.
-4. Click in the terminal, paste this whole line, and press **Enter**. Change
-   the file name at the end if your backup has a different one:
+5. Click in the **terminal** at the bottom (the black panel; click **bash**
+   in its list on the right if needed) — **not** the Copilot chat, which
+   runs its own version and never asks for the address. Paste this whole
+   line and press **Enter**. Change the file name at the end if your backup
+   has a different one:
 
    ```bash
-   cd backend; read -p "Paste the database address, then press Enter: " U; echo "DATABASE_URL=$U" > .env; npm run restore -- ../backups/tsv-2026-10-13_11-01-59.json --force
+   cd /workspaces/tsv/backend; read -p "Paste the database address, then press Enter: " U; echo "DATABASE_URL=$U" > .env; npm run restore -- ../backups/tsv-2026-11-10_13-03-21.json --force
    ```
 
-   When it asks, paste the **External** URL from step 1 and press **Enter**.
+   When it asks, paste the **External** URL from step 2 and press **Enter**.
    `--force` is needed because the site writes a log row into the new
    database the moment it starts.
 
-5. It should end with `Restored N rows`.
-6. Delete the Codespace: GitHub → **Code** → **Codespaces** → **…** →
-   **Delete**. This removes the file and the database URL from it. Neither
+6. It should end with `Restored N rows`.
+7. Delete the Codespace: go to **github.com/codespaces** → **…** next to it
+   → **Delete**. This removes the file and the database URL from it. Neither
    was ever uploaded to GitHub.
 
 **Done.** Sign in with your usual manager email and password. All accounts,
@@ -95,9 +101,9 @@ The site starts empty. Creating the first manager needs an invite code:
 | What you see | Fix |
 |---|---|
 | Site shows an error or won't deploy | Web service → **Logs**. A database error means `DATABASE_URL` is wrong: re-copy the **Internal** URL (Part 2) |
-| `restore` can't connect | You used the Internal URL. The Codespace needs the **External** one (Part 3, step 1) |
+| `restore` can't connect | You used the Internal URL. The Codespace needs the **External** one (Part 3, step 2), and check Access Control (step 1) |
 | `restore` says no such file | Check the file is in `backups` and the name in the command matches exactly |
-| Can't sign in after restoring | The restore didn't finish. Run step 4 again |
+| Can't sign in after restoring | The restore didn't finish. Run step 5 again |
 | No emails arrive | Nothing to do with the database. Check `RESEND_API_KEY` is still set under **Environment** |
 
 ## Settings the site needs (for reference)

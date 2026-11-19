@@ -175,9 +175,10 @@ database **30 days after it is created**. After that there is a 14-day grace
 period where only upgrading to a paid plan gets it back. Then the database and
 everything in it is gone.
 
-The current database, `tsv-db-2`, expires on **17 November 2026**. (The
+The current database, `tsv-db-3`, expires on **19 December 2026**. (The
 first one, `tsv-db`, expired on 17 October and was restored into `tsv-db-2`
-on 18 October using exactly the steps in [RESTORE.md](RESTORE.md).)
+on 18 October; `tsv-db-2` expired on 17 November and was restored into
+`tsv-db-3` on 19 November, both using the steps in [RESTORE.md](RESTORE.md).)
 
 ### What survives and what does not
 
@@ -197,17 +198,17 @@ Changing that date and pushing sends a fresh one. The Codespace steps below
 do the same thing by hand.
 
 This gives you the one file you need to restore everything later. It only
-works **before the database expires** (17 November for `tsv-db-2`). An
+works **before the database expires** (19 December for `tsv-db-3`). An
 expired database cannot be read from.
 
 Nothing needs installing. It runs in a GitHub Codespace, which is a free
 computer in your browser that already has this project on it.
 
-1. **Get the database address.** In Render, open the database `tsv-db-2` →
+1. **Get the database address.** In Render, open the database `tsv-db-3` →
    **Connect** → **External** tab → copy the URL. It contains the database
    password, so paste it only where these steps say.
-2. **Open a Codespace.** On this repository's GitHub page: **Code →
-   Codespaces → Create codespace on main**. Wait for it to finish setting up,
+2. **Open a Codespace.** Open **https://codespaces.new/scammy37/tsv** →
+   **Create codespace**. Wait for it to finish setting up,
    about 2–3 minutes, until the terminal at the bottom is ready.
 3. **Make the backup.** In that terminal, paste these lines one at a time,
    putting your URL between the quotes:
